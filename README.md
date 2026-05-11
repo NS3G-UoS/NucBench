@@ -37,6 +37,7 @@ It covers three task types:
 ## 👥 Authors
 - **Bassam A. Khuwaileh** — University of Sharjah  
 - **Polina Matesha** — University of Sharjah  
+- **Dina Elhanan** - University of Sharjah
 
 ---
 

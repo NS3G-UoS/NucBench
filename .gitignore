@@ -1,0 +1,5 @@
+exams/operator/*
+!exams/operator/README.md
+exams/undergraduate/exam_questions,json
+images/* 
+!images/README.md
