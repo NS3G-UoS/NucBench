@@ -12,7 +12,8 @@ The UI is divided into two columns:
 All long-running benchmark calls are executed inside a ``st.spinner`` so the
 UI remains responsive and progress is streamed via ``st.progress``.
 """
-
+# TODO: score in results.json is always incorrect 0 for open ended responses
+# just delete score tbh it's useless
 from __future__ import annotations
 
 import statistics
@@ -130,6 +131,8 @@ _DEFAULTS: Dict[str, Any] = {
     "models_loaded": False,
     "run_results": None,
     "run_error": None,
+    "pending_grading": False,
+    "grading_complete": False,
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
@@ -203,13 +206,26 @@ with st.sidebar:
         help="Sampling temperature for the LLM. 0 = deterministic.",
     )
 
-    n_iterations: int = st.number_input(
-        "N — samples per run",
+    n_questions: int = st.number_input(
+        "Unique Questions",
         min_value=1,
         max_value=5000,
         value=10,
         step=1,
-        help="Number of randomly sampled questions / images per benchmark run.",
+        help="Number of unique items to pull from the dataset.",
+    )
+
+    n_runs: int = st.number_input(
+        "Runs per Question",
+        min_value=1,
+        max_value=100,
+        value=1,
+        step=1,
+        help="Number of times to repeat the prompt for each unique question.",
+    )
+
+    st.info(
+        f"**Total Requests** = {n_questions} × {n_runs} = **{n_questions * n_runs}**"
     )
 
     delay_seconds: float = st.number_input(
@@ -233,6 +249,8 @@ def _run_task(task_fn, label: str, **kwargs) -> None:
     """Execute *task_fn* and store results / errors in session state."""
     st.session_state.run_results = None
     st.session_state.run_error = None
+    st.session_state.pending_grading = False
+    st.session_state.grading_complete = False
 
     progress_bar = st.progress(0.0, text=f"Running {label}…")
 
@@ -241,14 +259,26 @@ def _run_task(task_fn, label: str, **kwargs) -> None:
 
     try:
         payload = task_fn(progress_cb=_progress, **kwargs)
-        from nucbench.scoring import save_results
-        out_path = save_results(
-            task_name=payload["task_name"],
-            model=payload["model"],
-            scores=payload["scores"],
-            details=payload["details"],
+
+        # Check whether any open-ended responses need human grading
+        has_open_ended = any(
+            d.get("format") == "Open-Ended" and d.get("human_grade") is None
+            for d in payload.get("details", [])
         )
-        payload["results_path"] = str(out_path)
+
+        if has_open_ended:
+            # Defer save until human grades are submitted
+            st.session_state.pending_grading = True
+        else:
+            from nucbench.scoring import save_results
+            out_path = save_results(
+                task_name=payload["task_name"],
+                model=payload["model"],
+                scores=payload["scores"],
+                details=payload["details"],
+            )
+            payload["results_path"] = str(out_path)
+
         st.session_state.run_results = payload
     except Exception as exc:  # noqa: BLE001
         st.session_state.run_error = str(exc)
@@ -282,7 +312,8 @@ with col_tasks:
             model=selected_model,
             api_key=api_key_input.strip(),
             temperature=temperature,
-            n_samples=n_iterations,
+            n_samples=n_questions,
+            n_runs=n_runs,
             delay_s=delay_seconds,
         )
 
@@ -302,7 +333,8 @@ with col_tasks:
             model=selected_model,
             api_key=api_key_input.strip(),
             temperature=temperature,
-            n_samples=n_iterations,
+            n_samples=n_questions,
+            n_runs=n_runs,
             delay_s=delay_seconds,
         )
 
@@ -322,7 +354,8 @@ with col_tasks:
             model=selected_model,
             api_key=api_key_input.strip(),
             temperature=temperature,
-            n_samples=n_iterations,
+            n_samples=n_questions,
+            n_runs=n_runs,
             delay_s=delay_seconds,
         )
 
@@ -342,63 +375,251 @@ with col_results:
 
     elif st.session_state.run_results:
         res = st.session_state.run_results
-        scores: List[int] = res["scores"]
-        n = len(scores)
-        mean_acc = statistics.mean(scores) if scores else 0.0
-        std_dev = statistics.stdev(scores) if n > 1 else 0.0
 
-        st.markdown(
-            f"""
-            <div class="nb-result-card">
-                <h3>{res['task_name']}</h3>
-                <b>Model:</b> {res['model']}<br>
-                <b>Samples:</b> {n} &nbsp;|&nbsp;
-                <b>Mean Accuracy:</b> {mean_acc:.1%} &nbsp;|&nbsp;
-                <b>Std Dev:</b> {std_dev:.4f}<br>
-                <b>Saved to:</b> <code>{res.get('results_path', 'results.json')}</code>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        # ── Human grading form (shown when open-ended responses are pending) ──
+        if st.session_state.pending_grading and not st.session_state.grading_complete:
+            open_ended_indices = [
+                i for i, d in enumerate(res["details"])
+                if d.get("format") == "Open-Ended" and d.get("human_grade") is None
+            ]
 
-        # Per-question breakdown in an expander to keep the page tidy
-        with st.expander(f"Per-sample details ({n} items)", expanded=False):
-            for idx, detail in enumerate(res["details"], start=1):
-                correct = detail.get("score", 0) == 1
-                badge = (
-                    '<span class="nb-badge-success">✓ Correct</span>'
-                    if correct
-                    else '<span class="nb-badge-error">✗ Incorrect</span>'
-                )
+            st.warning(
+                f"⚠️ **{len(open_ended_indices)} open-ended response(s) require "
+                "manual grading** before results can be saved."
+            )
 
-                # Build a short label depending on task type
-                if "true_label" in detail:
-                    label_line = (
-                        f"**Image:** {detail['image']} &nbsp; "
-                        f"**Fluid:** {detail['fluid']} &nbsp; "
-                        f"**True:** {detail['true_label']}"
-                    )
-                else:
-                    label_line = (
-                        f"**ID:** {detail.get('question_id', idx)} &nbsp; "
-                        f"**Topic:** {detail.get('topic', '—')} &nbsp; "
-                        f"**Type:** {detail.get('type', '—')} &nbsp; "
-                        f"**Key:** {detail.get('key_answer', '—')}"
+            with st.form("grading_form"):
+                st.markdown("### ✍️ Human Grading")
+                collected_grades: Dict[int, float] = {}
+
+                for idx in open_ended_indices:
+                    detail = res["details"][idx]
+                    max_marks = detail.get("marks")
+                    q_num = idx + 1
+
+                    st.markdown(
+                        f"---\n**Response #{q_num}** &nbsp;"
+                        f"*(Run {detail.get('run', 1)} · "
+                        f"ID: {detail.get('question_id', '—')} · "
+                        f"Topic: {detail.get('topic', '—')})*"
                     )
 
-                st.markdown(
-                    f"**{idx}.** {label_line} &nbsp; {badge}",
-                    unsafe_allow_html=True,
-                )
-                with st.container():
+                    # Show question text
+                    q_text = detail.get("question", "")
+                    if q_text:
+                        with st.expander("Question", expanded=False):
+                            st.write(q_text)
+
+                    # Key answer for reference
+                    st.markdown(
+                        f"**Key Answer:** `{detail.get('key_answer', '—')}`"
+                    )
+
+                    # Confidence score (if extracted)
+                    conf = detail.get("confidence_score")
+                    if conf is not None:
+                        st.markdown(f"**Model Confidence:** {conf}%")
+
+                    # LLM response
                     st.text_area(
-                        label=f"Response {idx}",
+                        label="LLM Response",
                         value=detail.get("response", ""),
-                        height=80,
+                        height=120,
                         disabled=True,
-                        key=f"resp_{idx}",
-                        label_visibility="collapsed",
+                        key=f"oe_resp_{idx}",
                     )
+
+                    # Manual grade input
+                    collected_grades[idx] = st.number_input(
+                        "Manual Grade (%)",
+                        min_value=0.0,
+                        max_value=100.0,
+                        value=0.0,
+                        step=1.0,
+                        key=f"grade_{idx}",
+                        help="Score as a percentage (0–100).",
+                    )
+
+                submitted = st.form_submit_button(
+                    "✅ Submit Grades & Save Results",
+                    use_container_width=True,
+                )
+
+                if submitted:
+                    for idx, grade in collected_grades.items():
+                        res["details"][idx]["human_grade"] = grade
+                        res["details"][idx]["score"] = grade
+                        res["scores"][idx] = grade
+
+                    from nucbench.scoring import save_results
+                    out_path = save_results(
+                        task_name=res["task_name"],
+                        model=res["model"],
+                        scores=res["scores"],
+                        details=res["details"],
+                    )
+                    res["results_path"] = str(out_path)
+                    st.session_state.run_results = res
+                    st.session_state.pending_grading = False
+                    st.session_state.grading_complete = True
+                    st.rerun()
+
+        # ── Summary card (shown once grading is done or no open-ended items) ──
+        if not st.session_state.pending_grading or st.session_state.grading_complete:
+            scores: List[int] = res["scores"]
+            n = len(scores)
+            n_q = res.get("n_questions", n)
+            n_r = res.get("n_runs", 1)
+            mean_acc = statistics.mean(scores) if scores else 0.0
+            std_dev = statistics.stdev(scores) if n > 1 else 0.0
+
+            # Separate MCQ vs open-ended counts for display
+            mcq_details = [d for d in res["details"] if d.get("format") == "MCQ"]
+            oe_details = [d for d in res["details"] if d.get("format") == "Open-Ended"]
+            format_line = ""
+            if mcq_details or oe_details:
+                format_line = (
+                    f"<b>MCQ:</b> {len(mcq_details)} &nbsp;|&nbsp; "
+                    f"<b>Open-Ended:</b> {len(oe_details)}<br>"
+                )
+
+            st.markdown(
+                f"""
+                <div class="nb-result-card">
+                    <h3>{res['task_name']}</h3>
+                    <b>Model:</b> {res['model']}<br>
+                    <b>Unique Questions:</b> {n_q} &nbsp;|&nbsp;
+                    <b>Runs per Question:</b> {n_r} &nbsp;|&nbsp;
+                    <b>Total Requests:</b> {n}<br>
+                    {format_line}
+                    <b>Mean Accuracy:</b> {mean_acc:.1%} &nbsp;|&nbsp;
+                    <b>Std Dev:</b> {std_dev:.4f}<br>
+                    <b>Saved to:</b> <code>{res.get('results_path', 'results.json')}</code>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Per-response breakdown in an expander to keep the page tidy
+            with st.expander(f"Per-response details ({n} items)", expanded=False):
+                for idx, detail in enumerate(res["details"], start=1):
+                    fmt = detail.get("format", "")
+                    is_oe = fmt == "Open-Ended"
+
+                    if is_oe:
+                        human_g = detail.get("human_grade")
+                        badge = (
+                            f'<span class="nb-badge-success">Grade: {human_g}%</span>'
+                            if human_g is not None
+                            else '<span class="nb-badge-error">Ungraded</span>'
+                        )
+                    else:
+                        correct = detail.get("score", 0) == 1
+                        badge = (
+                            '<span class="nb-badge-success">✓ Correct</span>'
+                            if correct
+                            else '<span class="nb-badge-error">✗ Incorrect</span>'
+                        )
+
+                    # Build label line
+                    if "true_label" in detail:
+                        label_line = (
+                            f"**Image:** {detail['image']} &nbsp; "
+                            f"**Fluid:** {detail['fluid']} &nbsp; "
+                            f"**True:** {detail['true_label']}"
+                        )
+                    else:
+                        conf_str = ""
+                        if is_oe and detail.get("confidence_score") is not None:
+                            conf_str = f" &nbsp; **Conf:** {detail['confidence_score']}%"
+                        label_line = (
+                            f"**ID:** {detail.get('question_id', idx)} &nbsp; "
+                            f"**Topic:** {detail.get('topic', '—')} &nbsp; "
+                            f"**Format:** {fmt} &nbsp; "
+                            f"**Key:** {detail.get('key_answer', '—')}"
+                            f"{conf_str}"
+                        )
+
+                    st.markdown(
+                        f"**{idx}.** {label_line} &nbsp; {badge}",
+                        unsafe_allow_html=True,
+                    )
+                    with st.container():
+                        st.text_area(
+                            label=f"Response {idx}",
+                            value=detail.get("response", ""),
+                            height=80,
+                            disabled=True,
+                            key=f"resp_{idx}",
+                            label_visibility="collapsed",
+                        )
+
+            # ── Score correction form ─────────────────────────────────────────
+            with st.expander("✏️ Manually Correct Scores", expanded=False):
+                st.caption(
+                    "Override any automated or human score. "
+                    "All scores are expressed as percentages (0–100). "
+                    "MCQ auto-scores are shown as 0% (incorrect) or 100% (correct)."
+                )
+                with st.form("correction_form"):
+                    corrections: Dict[int, float] = {}
+                    for i, detail in enumerate(res["details"]):
+                        fmt = detail.get("format", "")
+                        is_oe = fmt == "Open-Ended"
+
+                        # Derive current percentage value for pre-fill
+                        if is_oe:
+                            cur_pct = float(detail.get("human_grade") or 0.0)
+                        else:
+                            # MCQ scores are 0/1 — convert to 0/100
+                            cur_pct = float(detail.get("score", 0)) * 100.0
+
+                        # Build a compact label
+                        if "true_label" in detail:
+                            entry_label = (
+                                f"#{i+1} · {detail.get('fluid','—')} · "
+                                f"{detail.get('image','—')} · "
+                                f"True: {detail.get('true_label','—')}"
+                            )
+                        else:
+                            entry_label = (
+                                f"#{i+1} · {detail.get('question_id', i+1)} · "
+                                f"{detail.get('topic','—')} · "
+                                f"[{fmt or 'Auto'}] · "
+                                f"Run {detail.get('run', 1)}"
+                            )
+
+                        corrections[i] = st.number_input(
+                            entry_label,
+                            min_value=0.0,
+                            max_value=100.0,
+                            value=cur_pct,
+                            step=1.0,
+                            key=f"corr_{i}",
+                        )
+
+                    save_corrections = st.form_submit_button(
+                        "💾 Save Corrections",
+                        use_container_width=True,
+                    )
+
+                if save_corrections:
+                    for i, pct in corrections.items():
+                        res["details"][i]["human_grade"] = pct
+                        res["details"][i]["score_corrected"] = True
+                        # Normalise score to 0-1 for aggregate stats
+                        res["scores"][i] = pct / 100.0
+                    from nucbench.scoring import save_results
+                    out_path = save_results(
+                        task_name=res["task_name"],
+                        model=res["model"],
+                        scores=res["scores"],
+                        details=res["details"],
+                    )
+                    res["results_path"] = str(out_path)
+                    st.session_state.run_results = res
+                    st.success(f"Corrections saved to `{out_path}`.")
+                    st.rerun()
 
     else:
         st.info("Run a benchmark task to see results here.")

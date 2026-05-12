@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from nucbench.prompts import build_exam_message, build_flow_regime_message
-from nucbench.scoring import score_exam_response, score_flow_regime_response
+from nucbench.scoring import extract_confidence_score, score_exam_response, score_flow_regime_response
 
 # ---------------------------------------------------------------------------
 # Repo-relative data paths
@@ -134,6 +134,7 @@ def run_flow_regime_task(
     api_key: str,
     temperature: float,
     n_samples: int,
+    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
 ) -> Dict[str, Any]:
@@ -143,18 +144,21 @@ def run_flow_regime_task(
         model:       LiteLLM model identifier.
         api_key:     Provider API key.
         temperature: Sampling temperature.
-        n_samples:   Number of randomly sampled images to classify.
+        n_samples:   Number of unique images to sample from the dataset.
+        n_runs:      Number of times to repeat the prompt for each image.
         delay_s:     Seconds to wait between consecutive API calls.
         progress_cb: Optional callback receiving progress in [0.0, 1.0].
 
     Returns:
-        A dict with keys ``scores``, ``details``, ``task_name``, ``model``.
+        A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
+        ``n_questions``, ``n_runs``.
     """
     all_images = _collect_all_images()
     if n_samples > len(all_images):
         n_samples = len(all_images)
 
     sampled = random.sample(all_images, n_samples)
+    total_requests = n_samples * n_runs
 
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
@@ -163,33 +167,38 @@ def run_flow_regime_task(
         b64, mime = _encode_image(img_path)
         messages = build_flow_regime_message(b64, mime)
 
-        try:
-            response_text = _call_llm(model, api_key, temperature, messages)
-            score = score_flow_regime_response(response_text, true_label)
-        except Exception as exc:  # noqa: BLE001
-            response_text = f"[ERROR] {exc}"
-            score = 0
+        for run_idx in range(n_runs):
+            try:
+                response_text = _call_llm(model, api_key, temperature, messages)
+                score = score_flow_regime_response(response_text, true_label)
+            except Exception as exc:  # noqa: BLE001
+                response_text = f"[ERROR] {exc}"
+                score = 0
 
-        scores.append(score)
-        details.append(
-            {
-                "image": img_path.name,
-                "fluid": img_path.parts[-3],   # e.g. "Fluid 1_Air"
-                "true_label": true_label,
-                "response": response_text,
-                "score": score,
-            }
-        )
+            scores.append(score)
+            details.append(
+                {
+                    "image": img_path.name,
+                    "fluid": img_path.parts[-3],   # e.g. "Fluid 1_Air"
+                    "true_label": true_label,
+                    "response": response_text,
+                    "score": score,
+                    "run": run_idx + 1,
+                }
+            )
 
-        if progress_cb:
-            progress_cb((i + 1) / n_samples)
+            request_num = i * n_runs + run_idx + 1
+            if progress_cb:
+                progress_cb(request_num / total_requests)
 
-        if i < n_samples - 1:
-            time.sleep(delay_s)
+            if request_num < total_requests:
+                time.sleep(delay_s)
 
     return {
         "task_name": "Two-Phase Flow Regime Classification",
         "model": model,
+        "n_questions": n_samples,
+        "n_runs": n_runs,
         "scores": scores,
         "details": details,
     }
@@ -204,6 +213,7 @@ def run_undergraduate_exam(
     api_key: str,
     temperature: float,
     n_samples: int,
+    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
 ) -> Dict[str, Any]:
@@ -213,12 +223,14 @@ def run_undergraduate_exam(
         model:       LiteLLM model identifier.
         api_key:     Provider API key.
         temperature: Sampling temperature.
-        n_samples:   Number of randomly sampled questions to evaluate.
+        n_samples:   Number of unique questions to sample from the dataset.
+        n_runs:      Number of times to repeat the prompt for each question.
         delay_s:     Seconds to wait between consecutive API calls.
         progress_cb: Optional callback receiving progress in [0.0, 1.0].
 
     Returns:
-        A dict with keys ``scores``, ``details``, ``task_name``, ``model``.
+        A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
+        ``n_questions``, ``n_runs``.
     """
     questions = _load_json(UNDERGRADUATE_JSON)
 
@@ -226,6 +238,7 @@ def run_undergraduate_exam(
         n_samples = len(questions)
 
     sampled = random.sample(questions, n_samples)
+    total_requests = n_samples * n_runs
 
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
@@ -235,42 +248,63 @@ def run_undergraduate_exam(
         q_text = question.get("Question_Prompt", "")
         q_type = props.get("Question_Type", "Qualitative")
         key_answer = str(props.get("Key_Answer", ""))
+        is_mcq = bool(props.get("MCQ", True))
+        marks = props.get("Marks")
 
         # Inline images embedded in the question (base64 encoded in the JSON)
         inline_images: List[Tuple[str, str]] = []
         for img_entry in question.get("images", []):
             inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
 
-        messages = build_exam_message(q_text, q_type, inline_images)
+        messages = build_exam_message(q_text, q_type, inline_images, is_mcq=is_mcq)
 
-        try:
-            response_text = _call_llm(model, api_key, temperature, messages)
-            score = score_exam_response(response_text, key_answer)
-        except Exception as exc:  # noqa: BLE001
-            response_text = f"[ERROR] {exc}"
-            score = 0
+        for run_idx in range(n_runs):
+            try:
+                response_text = _call_llm(model, api_key, temperature, messages)
+                if is_mcq:
+                    score = score_exam_response(response_text, key_answer)
+                    confidence_score = None
+                    human_grade: Optional[float] = float(score)
+                else:
+                    score = 0  # placeholder; replaced after human grading
+                    confidence_score = extract_confidence_score(response_text)
+                    human_grade = None
+            except Exception as exc:  # noqa: BLE001
+                response_text = f"[ERROR] {exc}"
+                score = 0
+                confidence_score = None
+                human_grade = None if not is_mcq else 0.0
 
-        scores.append(score)
-        details.append(
-            {
-                "question_id": props.get("Question_ID", ""),
-                "topic": props.get("Question_Topic", ""),
-                "type": q_type,
-                "key_answer": key_answer,
-                "response": response_text,
-                "score": score,
-            }
-        )
+            scores.append(score)
+            details.append(
+                {
+                    "question_id": props.get("Question_ID", ""),
+                    "topic": props.get("Question_Topic", ""),
+                    "type": q_type,
+                    "key_answer": key_answer,
+                    "question": q_text,
+                    "response": response_text,
+                    "score": score,
+                    "run": run_idx + 1,
+                    "format": "MCQ" if is_mcq else "Open-Ended",
+                    "confidence_score": confidence_score,
+                    "human_grade": human_grade,
+                    "marks": marks,
+                }
+            )
 
-        if progress_cb:
-            progress_cb((i + 1) / n_samples)
+            request_num = i * n_runs + run_idx + 1
+            if progress_cb:
+                progress_cb(request_num / total_requests)
 
-        if i < n_samples - 1:
-            time.sleep(delay_s)
+            if request_num < total_requests:
+                time.sleep(delay_s)
 
     return {
         "task_name": "Undergraduate Nuclear Engineering Exam",
         "model": model,
+        "n_questions": n_samples,
+        "n_runs": n_runs,
         "scores": scores,
         "details": details,
     }
@@ -285,6 +319,7 @@ def run_operator_exam(
     api_key: str,
     temperature: float,
     n_samples: int,
+    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
 ) -> Dict[str, Any]:
@@ -297,12 +332,14 @@ def run_operator_exam(
         model:       LiteLLM model identifier.
         api_key:     Provider API key.
         temperature: Sampling temperature.
-        n_samples:   Number of randomly sampled questions to evaluate.
+        n_samples:   Number of unique questions to sample from the dataset.
+        n_runs:      Number of times to repeat the prompt for each question.
         delay_s:     Seconds to wait between consecutive API calls.
         progress_cb: Optional callback receiving progress in [0.0, 1.0].
 
     Returns:
-        A dict with keys ``scores``, ``details``, ``task_name``, ``model``.
+        A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
+        ``n_questions``, ``n_runs``.
     """
     bwr_questions = _load_json(OPERATOR_JSON_BWR)
     pwr_questions = _load_json(OPERATOR_JSON_PWR)
@@ -312,6 +349,7 @@ def run_operator_exam(
         n_samples = len(all_questions)
 
     sampled = random.sample(all_questions, n_samples)
+    total_requests = n_samples * n_runs
 
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
@@ -321,42 +359,63 @@ def run_operator_exam(
         q_text = question.get("Question_Prompt", "")
         q_type = props.get("Question_Type", "Qualitative")
         key_answer = str(props.get("Key_Answer", ""))
+        is_mcq = bool(props.get("MCQ", True))
+        marks = props.get("Marks")
 
         inline_images: List[Tuple[str, str]] = []
         for img_entry in question.get("images", []):
             inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
 
-        messages = build_exam_message(q_text, q_type, inline_images)
+        messages = build_exam_message(q_text, q_type, inline_images, is_mcq=is_mcq)
 
-        try:
-            response_text = _call_llm(model, api_key, temperature, messages)
-            score = score_exam_response(response_text, key_answer)
-        except Exception as exc:  # noqa: BLE001
-            response_text = f"[ERROR] {exc}"
-            score = 0
+        for run_idx in range(n_runs):
+            try:
+                response_text = _call_llm(model, api_key, temperature, messages)
+                if is_mcq:
+                    score = score_exam_response(response_text, key_answer)
+                    confidence_score = None
+                    human_grade: Optional[float] = float(score)
+                else:
+                    score = 0  # placeholder; replaced after human grading
+                    confidence_score = extract_confidence_score(response_text)
+                    human_grade = None
+            except Exception as exc:  # noqa: BLE001
+                response_text = f"[ERROR] {exc}"
+                score = 0
+                confidence_score = None
+                human_grade = None if not is_mcq else 0.0
 
-        scores.append(score)
-        details.append(
-            {
-                "question_id": props.get("Question_ID", ""),
-                "reactor_type": props.get("Exam_Type", ""),
-                "topic": props.get("Question_Topic", ""),
-                "type": q_type,
-                "key_answer": key_answer,
-                "response": response_text,
-                "score": score,
-            }
-        )
+            scores.append(score)
+            details.append(
+                {
+                    "question_id": props.get("Question_ID", ""),
+                    "reactor_type": props.get("Exam_Type", ""),
+                    "topic": props.get("Question_Topic", ""),
+                    "type": q_type,
+                    "key_answer": key_answer,
+                    "question": q_text,
+                    "response": response_text,
+                    "score": score,
+                    "run": run_idx + 1,
+                    "format": "MCQ" if is_mcq else "Open-Ended",
+                    "confidence_score": confidence_score,
+                    "human_grade": human_grade,
+                    "marks": marks,
+                }
+            )
 
-        if progress_cb:
-            progress_cb((i + 1) / n_samples)
+            request_num = i * n_runs + run_idx + 1
+            if progress_cb:
+                progress_cb(request_num / total_requests)
 
-        if i < n_samples - 1:
-            time.sleep(delay_s)
+            if request_num < total_requests:
+                time.sleep(delay_s)
 
     return {
         "task_name": "GFE Reactor Operator Exam",
         "model": model,
+        "n_questions": n_samples,
+        "n_runs": n_runs,
         "scores": scores,
         "details": details,
     }

@@ -26,12 +26,16 @@ import re
 import statistics
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
+
+#: Regex to capture the confidence percentage from open-ended LLM responses.
+_CONFIDENCE_PATTERN = re.compile(r"\[Confidence:\s*(\d+)%\]", re.IGNORECASE)
+
 
 #: All valid flow-regime label strings (lowercase).
 FLOW_REGIME_LABELS: List[str] = ["bubbly", "slug", "churn", "taylor bubble", "taylor"]
@@ -77,6 +81,21 @@ def normalise_key_answer(key_answer: str) -> str:
     if re.match(r"^[A-D]$", stripped, re.IGNORECASE):
         return stripped.upper()
     return stripped
+
+
+def extract_confidence_score(text: str) -> Optional[int]:
+    """Extract the self-reported confidence percentage from an LLM response.
+
+    Looks for the pattern ``[Confidence: X%]`` (case-insensitive) that open-ended
+    prompts instruct the model to append.
+
+    Returns:
+        The integer percentage (0–100) if found, otherwise ``None``.
+    """
+    match = _CONFIDENCE_PATTERN.search(text)
+    if match:
+        return int(match.group(1))
+    return None
 
 
 # ---------------------------------------------------------------------------

@@ -47,6 +47,13 @@ FLOW_REGIME_INSTRUCTION = (
 # Tasks 2 & 3 — Exam questions (qualitative and quantitative)
 # ---------------------------------------------------------------------------
 
+#: Instruction appended to open-ended (non-MCQ) prompts to elicit a confidence score.
+OPEN_ENDED_CONFIDENCE_SUFFIX = (
+    "\n\nFormat requirement: Conclude your response with a confidence score "
+    "formatted exactly as [Confidence: X%]."
+)
+
+
 #: Template for qualitative (concept / multiple-choice) questions.
 _QUALITATIVE_TEMPLATE = (
     "You are an undergraduate nuclear engineering student taking an exam on "
@@ -64,20 +71,26 @@ _QUANTITATIVE_TEMPLATE = (
 )
 
 
-def build_exam_prompt(question_text: str, question_type: str) -> str:
+def build_exam_prompt(question_text: str, question_type: str, is_mcq: bool = True) -> str:
     """Select and render the correct exam prompt template.
 
     Args:
         question_text: Full text of the exam question (may include answer
                        choices such as ``A) … B) …``).
         question_type: ``"Qualitative"`` or ``"Quantitative"`` (case-insensitive).
+        is_mcq:        If ``False``, appends the open-ended confidence-score
+                       format requirement to the prompt.
 
     Returns:
         Formatted prompt string ready to pass to the LLM.
     """
     if question_type.strip().lower() == "quantitative":
-        return _QUANTITATIVE_TEMPLATE.format(question=question_text)
-    return _QUALITATIVE_TEMPLATE.format(question=question_text)
+        prompt = _QUANTITATIVE_TEMPLATE.format(question=question_text)
+    else:
+        prompt = _QUALITATIVE_TEMPLATE.format(question=question_text)
+    if not is_mcq:
+        prompt += OPEN_ENDED_CONFIDENCE_SUFFIX
+    return prompt
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +138,7 @@ def build_exam_message(
     question_text: str,
     question_type: str,
     inline_images: List[tuple],  # list of (b64_str, mime_type)
+    is_mcq: bool = True,
 ) -> List[Dict[str, Any]]:
     """Build the LiteLLM messages list for an exam question.
 
@@ -136,11 +150,13 @@ def build_exam_message(
         question_type: ``"Qualitative"`` or ``"Quantitative"``.
         inline_images: List of ``(base64_string, mime_type)`` tuples for any
                        images embedded in the question.  Pass ``[]`` if none.
+        is_mcq:        Forwarded to :func:`build_exam_prompt`; when ``False``
+                       the confidence-score requirement is appended.
 
     Returns:
         A ``messages`` list suitable for ``litellm.completion()``.
     """
-    prompt_text = build_exam_prompt(question_text, question_type)
+    prompt_text = build_exam_prompt(question_text, question_type, is_mcq=is_mcq)
 
     if not inline_images:
         # Plain-text question — use a simple string content for wider compat.
