@@ -14,7 +14,22 @@ It covers three task types:
 NucBench has both a web UI and a CLI for running benchmarks.
 
 ### ⚙️ Setup
-Upon fresh install (registers both the UI and the `nucbench` CLI command):
+1. Clone this repo into your local machine
+
+`git clone git@github.com:NS3G-UoS/NucBench.git`
+
+2. Request access to the dataset files through emailing our research supervisor Dr. Bassam (bkhuwaileh@sharjah.ac.ae). You will recieve the following files & folders and they must be placed in the following locations within this repository. 
+
+| File/Folder Name | Location to Move it to |
+|------------------|-----------------------|
+| exam_questions.json | exams/undergraduate/   (folder) |
+| pwr_bank.json | exams/operator/PWR/    (folder) |
+| bwr_bank.json | exams/operator/BWR/   (folder) |
+| Fluid 1_Air/    (folder) | images/    (folder) |
+| Fluid 2_CO2/    (folder) | images/    (folder) |
+
+
+3. Upon fresh install run the following (registers both the UI and the `nucbench` CLI command):
 ```bash
 pip install -e .
 ```
