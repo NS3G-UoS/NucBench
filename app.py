@@ -603,10 +603,14 @@ with col_results:
                     unsafe_allow_html=True,
                 )
                 with st.container():
+                    _resp = detail.get("response", "")
+                    # Grow height to fit content: ~20px per line, min 80, max 600
+                    _lines = max(1, _resp.count("\n") + 1)
+                    _resp_height = min(max(_lines * 20, 80), 600)
                     st.text_area(
                         label=f"Response {idx}",
-                        value=detail.get("response", ""),
-                        height=80,
+                        value=_resp,
+                        height=_resp_height,
                         disabled=True,
                         key=f"resp_{st.session_state.run_counter}_{idx}",
                         label_visibility="collapsed",
