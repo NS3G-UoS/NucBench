@@ -12,8 +12,7 @@ The UI is divided into two columns:
 All long-running benchmark calls are executed inside a ``st.spinner`` so the
 UI remains responsive and progress is streamed via ``st.progress``.
 """
-# TODO: score in results.json is always incorrect 0 for open ended responses
-# just delete score tbh it's useless
+
 from __future__ import annotations
 
 import statistics
@@ -131,8 +130,17 @@ _DEFAULTS: Dict[str, Any] = {
     "models_loaded": False,
     "run_results": None,
     "run_error": None,
-    "pending_grading": False,
-    "grading_complete": False,
+    "run_counter": 0,
+    "corrections_saved": False,
+    "cloud_vision_supported": None,  # None=unknown, True/False after validation
+    # Local / open-source model support
+    "mode": "Cloud",
+    "local_endpoint": "http://localhost:11434",
+    "local_models": [],
+    "local_models_loaded": False,
+    "local_connected": False,
+    "local_connection_message": "",
+    "local_model_manual": "",
 }
 for _k, _v in _DEFAULTS.items():
     if _k not in st.session_state:
@@ -146,51 +154,171 @@ for _k, _v in _DEFAULTS.items():
 with st.sidebar:
     st.header("⚙️ Configuration")
 
-    # -- Model list ----------------------------------------------------------
-    if not st.session_state.models_loaded:
-        with st.spinner("Loading vision-capable models…"):
-            from nucbench.models import get_vision_models
-            st.session_state.vision_models = get_vision_models()
-            st.session_state.models_loaded = True
-
-    model_list: List[str] = st.session_state.vision_models
-
-    if not model_list:
-        st.warning("No vision models found — check your LiteLLM installation.")
-        model_list = ["(none available)"]
-
-    selected_model: str = st.selectbox(
-        "Model",
-        options=model_list,
-        help="Only models with vision (image) support are listed.",
+    # -- Mode selector -------------------------------------------------------
+    mode: str = st.radio(
+        "Mode",
+        options=["Cloud", "Local"],
+        index=0 if st.session_state.mode == "Cloud" else 1,
+        horizontal=True,
+        help=(
+            "**Cloud** — use a hosted API provider via LiteLLM.  "
+            "**Local** — connect to a local inference server "
+            "(Ollama, llama.cpp, vLLM, LM Studio, etc.)."
+        ),
     )
+    # Reset validation state when the user switches modes
+    if mode != st.session_state.mode:
+        st.session_state.mode = mode
+        st.session_state.key_validated = False
+        st.session_state.local_connected = False
+        st.session_state.cloud_vision_supported = None
 
-    # -- API key -------------------------------------------------------------
-    st.subheader("API Key")
-    api_key_input: str = st.text_input(
-        "Provider API Key",
-        type="password",
-        placeholder="sk-…",
-        help="Key is sent only to your chosen provider via LiteLLM.",
-    )
+    if mode == "Cloud":
+        # -- Cloud model list ------------------------------------------------
+        if not st.session_state.models_loaded:
+            with st.spinner("Loading models…"):
+                from nucbench.models import get_all_models
+                st.session_state.vision_models = get_all_models()
+                st.session_state.models_loaded = True
 
-    validate_btn = st.button("🔑 Validate Key", use_container_width=True)
+        model_list: List[str] = st.session_state.vision_models
 
-    if validate_btn:
-        if not api_key_input.strip():
-            st.error("Please enter an API key before validating.")
+        if not model_list:
+            st.warning("No models found — check your LiteLLM installation.")
+            model_list = ["(none available)"]
+
+        selected_model: str = st.selectbox(
+            "Model",
+            options=model_list,
+            help="All LiteLLM-registered models. Vision support is checked when you validate your API key.",
+        )
+        api_base: Optional[str] = None
+
+        # -- API key ---------------------------------------------------------
+        st.subheader("API Key")
+        api_key_input: str = st.text_input(
+            "Provider API Key",
+            type="password",
+            placeholder="sk-…",
+            help="Key is sent only to your chosen provider via LiteLLM.",
+        )
+
+        validate_btn = st.button("🔑 Validate Key", use_container_width=True)
+
+        if validate_btn:
+            if not api_key_input.strip():
+                st.error("Please enter an API key before validating.")
+            else:
+                with st.spinner("Validating…"):
+                    from nucbench.models import validate_api_key, model_supports_vision
+                    ok, msg = validate_api_key(selected_model, api_key_input.strip())
+                st.session_state.key_validated = ok
+                st.session_state.validation_message = msg
+                if ok:
+                    st.session_state.cloud_vision_supported = model_supports_vision(selected_model)
+                else:
+                    st.session_state.cloud_vision_supported = None
+
+        if st.session_state.validation_message:
+            if st.session_state.key_validated:
+                st.success(st.session_state.validation_message)
+            else:
+                st.error(st.session_state.validation_message)
+
+        if st.session_state.key_validated and st.session_state.cloud_vision_supported is False:
+            st.warning("⚠️ This model does not support image input — the Two-Phase Flow task will be disabled.")
+
+    else:  # mode == "Local"
+        # -- Local inference server ------------------------------------------
+        st.subheader("Local Inference Server")
+        local_endpoint: str = st.text_input(
+            "Server URL",
+            value=st.session_state.local_endpoint,
+            placeholder="http://localhost:11434",
+            help=(
+                "Base URL of your local inference server — **no `/v1` needed**, "
+                "it is appended automatically.\n\n"
+                "Common defaults:\n"
+                "- **Ollama**: `http://localhost:11434`\n"
+                "- **LM Studio**: `http://localhost:1234`\n"
+                "- **vLLM / llama.cpp / LocalAI**: `http://localhost:8080`\n"
+                "- **Jan**: `http://localhost:1337`\n"
+                "- **Text Gen WebUI**: `http://localhost:5000`"
+            ),
+        )
+        if local_endpoint != st.session_state.local_endpoint:
+            st.session_state.local_endpoint = local_endpoint
+            st.session_state.local_models = []
+            st.session_state.local_models_loaded = False
+            st.session_state.local_connected = False
+
+        if st.button("🔄 Refresh Models", use_container_width=True):
+            with st.spinner("Querying local server…"):
+                from nucbench.models import get_local_models
+                st.session_state.local_models = get_local_models(
+                    st.session_state.local_endpoint
+                )
+                st.session_state.local_models_loaded = True
+
+        _local_list: List[str] = st.session_state.local_models
+
+        # Always-visible text input — value persists in session state via key.
+        # The user can type any model name here; it takes priority over the
+        # dropdown below.
+        st.text_input(
+            "Model identifier",
+            key="local_model_manual",
+            placeholder="llama3:8b  or  ollama/llama3:8b",
+            help=(
+                "Any of these formats work — the app normalises them automatically:\n\n"
+                "- Bare name: `llama3:8b`, `mistral`, `phi3`\n"
+                "- Ollama prefix: `ollama/llama3:8b`\n"
+                "- OpenAI-compat prefix: `openai/mistral`\n"
+                "- vLLM HuggingFace path: `meta-llama/Llama-3-8B-Instruct`\n\n"
+                "Leave blank to pick from the discovered-models dropdown below."
+            ),
+        )
+        _manual_value: str = st.session_state.local_model_manual.strip()
+
+        # Dropdown of auto-discovered models (optional convenience).
+        _dropdown_choice = ""
+        if _local_list:
+            _dropdown_choice = st.selectbox(
+                "Discovered models",
+                options=[""] + _local_list,
+                format_func=lambda x: "— select a discovered model —" if x == "" else x,
+                help="Models auto-discovered from the local inference server. "
+                     "Ignored when a model identifier is typed above.",
+            )
+        elif not st.session_state.local_models_loaded:
+            st.info("Click **Refresh Models** to discover models on the server.")
         else:
-            with st.spinner("Validating…"):
-                from nucbench.models import validate_api_key
-                ok, msg = validate_api_key(selected_model, api_key_input.strip())
-            st.session_state.key_validated = ok
-            st.session_state.validation_message = msg
+            st.warning("No models found at that URL. Enter a model name above.")
 
-    if st.session_state.validation_message:
-        if st.session_state.key_validated:
-            st.success(st.session_state.validation_message)
-        else:
-            st.error(st.session_state.validation_message)
+        # Manual entry wins; fall back to dropdown selection.
+        selected_model = _manual_value or _dropdown_choice
+
+        api_base = st.session_state.local_endpoint
+        api_key_input = ""  # no API key needed for local models
+
+        # -- Connection test -------------------------------------------------
+        test_btn = st.button("🔌 Test Connection", use_container_width=True)
+        if test_btn:
+            from nucbench.models import validate_model_identifier, test_local_connection
+            fmt_ok, fmt_err = validate_model_identifier(selected_model)
+            if not fmt_ok:
+                st.error(fmt_err)
+            else:
+                with st.spinner("Testing connection…"):
+                    ok, msg = test_local_connection(selected_model, api_base)
+                st.session_state.local_connected = ok
+                st.session_state.local_connection_message = msg
+
+        if st.session_state.local_connection_message:
+            if st.session_state.local_connected:
+                st.success(st.session_state.local_connection_message)
+            else:
+                st.error(st.session_state.local_connection_message)
 
     st.divider()
 
@@ -207,25 +335,41 @@ with st.sidebar:
     )
 
     n_questions: int = st.number_input(
-        "Unique Questions",
+        "Unique questions (samples)",
         min_value=1,
         max_value=5000,
         value=10,
         step=1,
-        help="Number of unique items to pull from the dataset.",
+        help="How many questions / images to randomly draw from the dataset per run.",
     )
 
     n_runs: int = st.number_input(
-        "Runs per Question",
+        "Runs per question",
         min_value=1,
         max_value=100,
         value=1,
         step=1,
-        help="Number of times to repeat the prompt for each unique question.",
+        help=(
+            "How many times each sampled question is sent to the model.  "
+            "Total requests = Unique questions × Runs per question."
+        ),
     )
 
-    st.info(
-        f"**Total Requests** = {n_questions} × {n_runs} = **{n_questions * n_runs}**"
+    unique_per_run: bool = st.checkbox(
+        "Unique questions per run",
+        value=False,
+        help=(
+            "When **checked**: a fresh random sample is drawn before each run — "
+            "good for broad dataset coverage across many runs.  "
+            "When **unchecked** (default): every run repeats the same questions — "
+            "good for measuring response variance on a fixed set."
+        ),
+    )
+
+    total_requests = n_questions * n_runs
+    st.caption(
+        f"Total requests: {n_questions} questions × {n_runs} run{'s' if n_runs != 1 else ''}"
+        f" = **{total_requests}**"
     )
 
     delay_seconds: float = st.number_input(
@@ -234,7 +378,7 @@ with st.sidebar:
         max_value=60.0,
         value=1.0,
         step=0.5,
-        help="Wait time inserted between consecutive API calls to avoid rate limits.",
+        help="Wait time between consecutive API calls. Set to 0 for local models.",
     )
 
     st.divider()
@@ -249,8 +393,6 @@ def _run_task(task_fn, label: str, **kwargs) -> None:
     """Execute *task_fn* and store results / errors in session state."""
     st.session_state.run_results = None
     st.session_state.run_error = None
-    st.session_state.pending_grading = False
-    st.session_state.grading_complete = False
 
     progress_bar = st.progress(0.0, text=f"Running {label}…")
 
@@ -259,26 +401,16 @@ def _run_task(task_fn, label: str, **kwargs) -> None:
 
     try:
         payload = task_fn(progress_cb=_progress, **kwargs)
-
-        # Check whether any open-ended responses need human grading
-        has_open_ended = any(
-            d.get("format") == "Open-Ended" and d.get("human_grade") is None
-            for d in payload.get("details", [])
+        from nucbench.scoring import save_results
+        out_path, run_index = save_results(
+            task_name=payload["task_name"],
+            model=payload["model"],
+            scores=payload["scores"],
+            details=payload["details"],
         )
-
-        if has_open_ended:
-            # Defer save until human grades are submitted
-            st.session_state.pending_grading = True
-        else:
-            from nucbench.scoring import save_results
-            out_path = save_results(
-                task_name=payload["task_name"],
-                model=payload["model"],
-                scores=payload["scores"],
-                details=payload["details"],
-            )
-            payload["results_path"] = str(out_path)
-
+        payload["results_path"] = str(out_path)
+        payload["results_index"] = run_index
+        st.session_state.run_counter = st.session_state.get("run_counter", 0) + 1
         st.session_state.run_results = payload
     except Exception as exc:  # noqa: BLE001
         st.session_state.run_error = str(exc)
@@ -295,8 +427,16 @@ col_tasks, col_results = st.columns([1, 2], gap="large")
 with col_tasks:
     st.subheader("📋 Benchmark Tasks")
 
-    locked = not st.session_state.key_validated
-    lock_msg = "Validate your API key first." if locked else ""
+    locked = (
+        not st.session_state.key_validated
+        if st.session_state.mode == "Cloud"
+        else not st.session_state.local_connected
+    )
+    lock_msg = (
+        "Validate your API key first."
+        if st.session_state.mode == "Cloud" and locked
+        else "Test your local connection first." if locked else ""
+    )
 
     # Task 1 — Undergrad exam
     if st.button(
@@ -311,9 +451,11 @@ with col_tasks:
             label="Undergraduate Exam",
             model=selected_model,
             api_key=api_key_input.strip(),
+            api_base=api_base,
             temperature=temperature,
             n_samples=n_questions,
             n_runs=n_runs,
+            unique_per_run=unique_per_run,
             delay_s=delay_seconds,
         )
 
@@ -332,20 +474,32 @@ with col_tasks:
             label="Reactor Operator Exam",
             model=selected_model,
             api_key=api_key_input.strip(),
+            api_base=api_base,
             temperature=temperature,
             n_samples=n_questions,
             n_runs=n_runs,
+            unique_per_run=unique_per_run,
             delay_s=delay_seconds,
         )
 
     st.write("")
 
     # Task 3 — Flow regime classification
+    _flow_no_vision = (
+        st.session_state.mode == "Cloud"
+        and st.session_state.cloud_vision_supported is False
+    )
+    _flow_disabled = locked or _flow_no_vision
+    _flow_help = (
+        lock_msg
+        or ("Model does not support image input." if _flow_no_vision else "")
+        or "Classify bubbly / slug / churn / Taylor Bubble images."
+    )
     if st.button(
         "🌊 Two-Phase Flow Classification",
-        disabled=locked,
+        disabled=_flow_disabled,
         use_container_width=True,
-        help=lock_msg or "Classify bubbly / slug / churn / Taylor Bubble images.",
+        help=_flow_help,
     ):
         from nucbench.tasks import run_flow_regime_task
         _run_task(
@@ -353,14 +507,21 @@ with col_tasks:
             label="Flow Regime Classification",
             model=selected_model,
             api_key=api_key_input.strip(),
+            api_base=api_base,
             temperature=temperature,
             n_samples=n_questions,
             n_runs=n_runs,
+            unique_per_run=unique_per_run,
             delay_s=delay_seconds,
         )
 
     if locked:
-        st.info("🔒 Validate your API key in the sidebar to enable benchmarking.")
+        if st.session_state.mode == "Local":
+            st.info("🔒 Test connection to local model in the sidebar to enable benchmarking.")
+        else:
+            st.info("🔒 Validate your API key in the sidebar to enable benchmarking.")
+    elif _flow_no_vision:
+        st.info("🔒 Selected model does not support image input — Two-Phase Flow task is disabled.")
 
 
 # ---------------------------------------------------------------------------
@@ -375,251 +536,146 @@ with col_results:
 
     elif st.session_state.run_results:
         res = st.session_state.run_results
+        scores: List[int] = res["scores"]
+        n = len(scores)
+        n_q = res.get("n_questions", n)
+        n_r = res.get("n_runs", 1)
+        mean_acc = statistics.mean(scores) if scores else 0.0
+        std_dev = statistics.stdev(scores) if n > 1 else 0.0
 
-        # ── Human grading form (shown when open-ended responses are pending) ──
-        if st.session_state.pending_grading and not st.session_state.grading_complete:
-            open_ended_indices = [
-                i for i, d in enumerate(res["details"])
-                if d.get("format") == "Open-Ended" and d.get("human_grade") is None
-            ]
+        # Show post-correction success banner (set by the save handler below)
+        if st.session_state.pop("corrections_saved", False):
+            st.success("✓ Corrections saved to results.json")
 
-            st.warning(
-                f"⚠️ **{len(open_ended_indices)} open-ended response(s) require "
-                "manual grading** before results can be saved."
-            )
+        runs_line = (
+            f"<b>Questions:</b> {n_q} &nbsp;|&nbsp;"
+            f"<b>Runs per question:</b> {n_r} &nbsp;|&nbsp;"
+            f"<b>Total requests:</b> {n}"
+        )
 
-            with st.form("grading_form"):
-                st.markdown("### ✍️ Human Grading")
-                collected_grades: Dict[int, float] = {}
+        st.markdown(
+            f"""
+            <div class="nb-result-card">
+                <h3>{res['task_name']}</h3>
+                <b>Model:</b> {res['model']}<br>
+                {runs_line}<br>
+                <b>Mean Accuracy:</b> {mean_acc:.1%} &nbsp;|&nbsp;
+                <b>Std Dev:</b> {std_dev:.4f}<br>
+                <b>Saved to:</b> <code>{res.get('results_path', 'results.json')}</code>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
-                for idx in open_ended_indices:
-                    detail = res["details"][idx]
-                    max_marks = detail.get("marks")
-                    q_num = idx + 1
+        # ── Per-response details ─────────────────────────────────────────────
+        with st.expander(f"Per-sample details ({n} items)", expanded=False):
+            for idx, detail in enumerate(res["details"], start=1):
+                correct = detail.get("score", 0) == 1
+                badge = (
+                    '<span class="nb-badge-success">✓ Correct</span>'
+                    if correct
+                    else '<span class="nb-badge-error">✗ Incorrect</span>'
+                )
 
-                    st.markdown(
-                        f"---\n**Response #{q_num}** &nbsp;"
-                        f"*(Run {detail.get('run', 1)} · "
-                        f"ID: {detail.get('question_id', '—')} · "
-                        f"Topic: {detail.get('topic', '—')})*"
+                run_tag = (
+                    f" &nbsp; **Run:** {detail.get('run', 1)}/{n_r}"
+                    if n_r > 1 else ""
+                )
+
+                if "true_label" in detail:
+                    label_line = (
+                        f"**Image:** {detail['image']} &nbsp; "
+                        f"**Fluid:** {detail['fluid']} &nbsp; "
+                        f"**True:** {detail['true_label']}"
+                        + run_tag
+                    )
+                else:
+                    label_line = (
+                        f"**ID:** {detail.get('question_id', idx)} &nbsp; "
+                        f"**Topic:** {detail.get('topic', '—')} &nbsp; "
+                        f"**Type:** {detail.get('type', '—')} &nbsp; "
+                        f"**Key:** {detail.get('key_answer', '—')}"
+                        + run_tag
                     )
 
-                    # Show question text
-                    q_text = detail.get("question", "")
-                    if q_text:
-                        with st.expander("Question", expanded=False):
-                            st.write(q_text)
-
-                    # Key answer for reference
-                    st.markdown(
-                        f"**Key Answer:** `{detail.get('key_answer', '—')}`"
-                    )
-
-                    # Confidence score (if extracted)
-                    conf = detail.get("confidence_score")
-                    if conf is not None:
-                        st.markdown(f"**Model Confidence:** {conf}%")
-
-                    # LLM response
+                st.markdown(
+                    f"**{idx}.** {label_line} &nbsp; {badge}",
+                    unsafe_allow_html=True,
+                )
+                with st.container():
                     st.text_area(
-                        label="LLM Response",
+                        label=f"Response {idx}",
                         value=detail.get("response", ""),
-                        height=120,
+                        height=80,
                         disabled=True,
-                        key=f"oe_resp_{idx}",
+                        key=f"resp_{st.session_state.run_counter}_{idx}",
+                        label_visibility="collapsed",
                     )
 
-                    # Manual grade input
-                    collected_grades[idx] = st.number_input(
-                        "Manual Grade (%)",
-                        min_value=0.0,
-                        max_value=100.0,
-                        value=0.0,
-                        step=1.0,
-                        key=f"grade_{idx}",
-                        help="Score as a percentage (0–100).",
-                    )
-
-                submitted = st.form_submit_button(
-                    "✅ Submit Grades & Save Results",
-                    use_container_width=True,
-                )
-
-                if submitted:
-                    for idx, grade in collected_grades.items():
-                        res["details"][idx]["human_grade"] = grade
-                        res["details"][idx]["score"] = grade
-                        res["scores"][idx] = grade
-
-                    from nucbench.scoring import save_results
-                    out_path = save_results(
-                        task_name=res["task_name"],
-                        model=res["model"],
-                        scores=res["scores"],
-                        details=res["details"],
-                    )
-                    res["results_path"] = str(out_path)
-                    st.session_state.run_results = res
-                    st.session_state.pending_grading = False
-                    st.session_state.grading_complete = True
-                    st.rerun()
-
-        # ── Summary card (shown once grading is done or no open-ended items) ──
-        if not st.session_state.pending_grading or st.session_state.grading_complete:
-            scores: List[int] = res["scores"]
-            n = len(scores)
-            n_q = res.get("n_questions", n)
-            n_r = res.get("n_runs", 1)
-            mean_acc = statistics.mean(scores) if scores else 0.0
-            std_dev = statistics.stdev(scores) if n > 1 else 0.0
-
-            # Separate MCQ vs open-ended counts for display
-            mcq_details = [d for d in res["details"] if d.get("format") == "MCQ"]
-            oe_details = [d for d in res["details"] if d.get("format") == "Open-Ended"]
-            format_line = ""
-            if mcq_details or oe_details:
-                format_line = (
-                    f"<b>MCQ:</b> {len(mcq_details)} &nbsp;|&nbsp; "
-                    f"<b>Open-Ended:</b> {len(oe_details)}<br>"
-                )
-
-            st.markdown(
-                f"""
-                <div class="nb-result-card">
-                    <h3>{res['task_name']}</h3>
-                    <b>Model:</b> {res['model']}<br>
-                    <b>Unique Questions:</b> {n_q} &nbsp;|&nbsp;
-                    <b>Runs per Question:</b> {n_r} &nbsp;|&nbsp;
-                    <b>Total Requests:</b> {n}<br>
-                    {format_line}
-                    <b>Mean Accuracy:</b> {mean_acc:.1%} &nbsp;|&nbsp;
-                    <b>Std Dev:</b> {std_dev:.4f}<br>
-                    <b>Saved to:</b> <code>{res.get('results_path', 'results.json')}</code>
-                </div>
-                """,
-                unsafe_allow_html=True,
+        # ── Score correction editor ──────────────────────────────────────────
+        rc = st.session_state.run_counter
+        with st.expander(f"✏️ Correct Scores ({n} items)", expanded=False):
+            st.caption(
+                "Override the automated score for any response, "
+                "then click **Save Corrections** — `results.json` will be updated in place."
             )
 
-            # Per-response breakdown in an expander to keep the page tidy
-            with st.expander(f"Per-response details ({n} items)", expanded=False):
-                for idx, detail in enumerate(res["details"], start=1):
-                    fmt = detail.get("format", "")
-                    is_oe = fmt == "Open-Ended"
-
-                    if is_oe:
-                        human_g = detail.get("human_grade")
-                        badge = (
-                            f'<span class="nb-badge-success">Grade: {human_g}%</span>'
-                            if human_g is not None
-                            else '<span class="nb-badge-error">Ungraded</span>'
-                        )
-                    else:
-                        correct = detail.get("score", 0) == 1
-                        badge = (
-                            '<span class="nb-badge-success">✓ Correct</span>'
-                            if correct
-                            else '<span class="nb-badge-error">✗ Incorrect</span>'
-                        )
-
-                    # Build label line
+            new_scores: List[int] = []
+            for idx, detail in enumerate(res["details"]):
+                auto = detail.get("score", 0)
+                col_lbl, col_sel = st.columns([4, 1])
+                with col_lbl:
+                    run_part = (
+                        f" · Run {detail.get('run', 1)}/{n_r}" if n_r > 1 else ""
+                    )
                     if "true_label" in detail:
-                        label_line = (
-                            f"**Image:** {detail['image']} &nbsp; "
-                            f"**Fluid:** {detail['fluid']} &nbsp; "
-                            f"**True:** {detail['true_label']}"
+                        st.markdown(
+                            f"**{idx + 1}.** `{detail['image']}` · "
+                            f"True: **{detail['true_label']}**{run_part}"
                         )
                     else:
-                        conf_str = ""
-                        if is_oe and detail.get("confidence_score") is not None:
-                            conf_str = f" &nbsp; **Conf:** {detail['confidence_score']}%"
-                        label_line = (
-                            f"**ID:** {detail.get('question_id', idx)} &nbsp; "
-                            f"**Topic:** {detail.get('topic', '—')} &nbsp; "
-                            f"**Format:** {fmt} &nbsp; "
-                            f"**Key:** {detail.get('key_answer', '—')}"
-                            f"{conf_str}"
+                        st.markdown(
+                            f"**{idx + 1}.** `{detail.get('question_id', idx + 1)}` · "
+                            f"Key: **{detail.get('key_answer', '—')}**{run_part}"
                         )
-
-                    st.markdown(
-                        f"**{idx}.** {label_line} &nbsp; {badge}",
-                        unsafe_allow_html=True,
+                with col_sel:
+                    sel = st.selectbox(
+                        "score",
+                        options=["✓ Correct", "✗ Incorrect"],
+                        index=0 if auto == 1 else 1,
+                        key=f"score_edit_{rc}_{idx}",
+                        label_visibility="collapsed",
                     )
-                    with st.container():
-                        st.text_area(
-                            label=f"Response {idx}",
-                            value=detail.get("response", ""),
-                            height=80,
-                            disabled=True,
-                            key=f"resp_{idx}",
-                            label_visibility="collapsed",
-                        )
+                new_scores.append(1 if sel == "✓ Correct" else 0)
 
-            # ── Score correction form ─────────────────────────────────────────
-            with st.expander("✏️ Manually Correct Scores", expanded=False):
-                st.caption(
-                    "Override any automated or human score. "
-                    "All scores are expressed as percentages (0–100). "
-                    "MCQ auto-scores are shown as 0% (incorrect) or 100% (correct)."
-                )
-                with st.form("correction_form"):
-                    corrections: Dict[int, float] = {}
-                    for i, detail in enumerate(res["details"]):
-                        fmt = detail.get("format", "")
-                        is_oe = fmt == "Open-Ended"
+            if st.button(
+                "💾 Save Corrections",
+                use_container_width=True,
+                key=f"save_corr_{rc}",
+            ):
+                updated_details = []
+                for i, (det, ns) in enumerate(zip(res["details"], new_scores)):
+                    d = {**det, "score": ns}
+                    if ns != res["scores"][i]:
+                        d["human_grade"] = ns * 100
+                        d["manually_corrected"] = True
+                    updated_details.append(d)
 
-                        # Derive current percentage value for pre-fill
-                        if is_oe:
-                            cur_pct = float(detail.get("human_grade") or 0.0)
-                        else:
-                            # MCQ scores are 0/1 — convert to 0/100
-                            cur_pct = float(detail.get("score", 0)) * 100.0
-
-                        # Build a compact label
-                        if "true_label" in detail:
-                            entry_label = (
-                                f"#{i+1} · {detail.get('fluid','—')} · "
-                                f"{detail.get('image','—')} · "
-                                f"True: {detail.get('true_label','—')}"
-                            )
-                        else:
-                            entry_label = (
-                                f"#{i+1} · {detail.get('question_id', i+1)} · "
-                                f"{detail.get('topic','—')} · "
-                                f"[{fmt or 'Auto'}] · "
-                                f"Run {detail.get('run', 1)}"
-                            )
-
-                        corrections[i] = st.number_input(
-                            entry_label,
-                            min_value=0.0,
-                            max_value=100.0,
-                            value=cur_pct,
-                            step=1.0,
-                            key=f"corr_{i}",
-                        )
-
-                    save_corrections = st.form_submit_button(
-                        "💾 Save Corrections",
-                        use_container_width=True,
+                from nucbench.scoring import save_score_corrections
+                try:
+                    save_score_corrections(
+                        output_path=res.get("results_path", "results.json"),
+                        run_index=res.get("results_index", -1),
+                        updated_scores=new_scores,
+                        updated_details=updated_details,
                     )
-
-                if save_corrections:
-                    for i, pct in corrections.items():
-                        res["details"][i]["human_grade"] = pct
-                        res["details"][i]["score_corrected"] = True
-                        # Normalise score to 0-1 for aggregate stats
-                        res["scores"][i] = pct / 100.0
-                    from nucbench.scoring import save_results
-                    out_path = save_results(
-                        task_name=res["task_name"],
-                        model=res["model"],
-                        scores=res["scores"],
-                        details=res["details"],
-                    )
-                    res["results_path"] = str(out_path)
-                    st.session_state.run_results = res
-                    st.success(f"Corrections saved to `{out_path}`.")
+                    # Update in-memory payload so summary card reflects changes
+                    st.session_state.run_results["scores"] = new_scores
+                    st.session_state.run_results["details"] = updated_details
+                    st.session_state["corrections_saved"] = True
                     st.rerun()
+                except Exception as exc:  # noqa: BLE001
+                    st.error(f"Failed to save corrections: {exc}")
 
     else:
         st.info("Run a benchmark task to see results here.")

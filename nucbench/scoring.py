@@ -174,7 +174,7 @@ def save_results(
     scores: List[int],
     details: List[Dict[str, Any]],
     output_path: str = "results.json",
-) -> Path:
+) -> tuple:
     """Append a benchmark-run record to ``results.json``.
 
     Loads any existing file content, appends the new run, and writes back
@@ -188,7 +188,9 @@ def save_results(
         output_path: Destination file path (relative or absolute).
 
     Returns:
-        The resolved ``Path`` of the written file.
+        A ``(path, run_index)`` tuple — the resolved ``Path`` of the written
+        file and the zero-based index of the newly appended record, which can
+        be passed to :func:`save_score_corrections` later.
     """
     mean_acc = statistics.mean(scores) if scores else 0.0
     std_dev = statistics.stdev(scores) if len(scores) > 1 else 0.0
@@ -217,9 +219,65 @@ def save_results(
             # Corrupted file — start fresh rather than crash
             existing = []
 
+    run_index = len(existing)   # index of the record we are about to append
     existing.append(run_record)
 
     # Write to a temporary file then rename for atomicity
+    tmp_path = out.with_suffix(".json.tmp")
+    with tmp_path.open("w", encoding="utf-8") as fh:
+        json.dump(existing, fh, indent=2, ensure_ascii=False)
+    tmp_path.replace(out)
+
+    return out.resolve(), run_index
+
+
+def save_score_corrections(
+    output_path: str,
+    run_index: int,
+    updated_scores: List[int],
+    updated_details: List[Dict[str, Any]],
+) -> Path:
+    """Overwrite the scores and details of one run record in ``results.json``.
+
+    Used to persist manual score corrections made after a benchmark run
+    (via the UI score editor or a future CLI review command).
+
+    Args:
+        output_path:     Path to the existing results JSON file.
+        run_index:       Zero-based index of the run record to update
+                         (as returned by :func:`save_results`).
+        updated_scores:  Corrected per-question scores.
+        updated_details: Corrected per-question detail dicts.
+
+    Returns:
+        The resolved ``Path`` of the written file.
+
+    Raises:
+        ValueError: If *run_index* is out of range for the file's record list.
+        OSError:    If the file cannot be read or written.
+    """
+    mean_acc = statistics.mean(updated_scores) if updated_scores else 0.0
+    std_dev = statistics.stdev(updated_scores) if len(updated_scores) > 1 else 0.0
+
+    out = Path(output_path)
+    existing: List[Dict[str, Any]] = []
+    if out.exists():
+        with out.open("r", encoding="utf-8") as fh:
+            loaded = json.load(fh)
+        existing = loaded if isinstance(loaded, list) else [loaded]
+
+    if run_index < 0 or run_index >= len(existing):
+        raise ValueError(
+            f"Run index {run_index} is out of range "
+            f"({out.name} contains {len(existing)} record(s))."
+        )
+
+    existing[run_index]["scores"] = updated_scores
+    existing[run_index]["details"] = updated_details
+    existing[run_index]["mean_accuracy"] = round(mean_acc, 6)
+    existing[run_index]["std_deviation"] = round(std_dev, 6)
+    existing[run_index]["corrected_at"] = datetime.now(timezone.utc).isoformat()
+
     tmp_path = out.with_suffix(".json.tmp")
     with tmp_path.open("w", encoding="utf-8") as fh:
         json.dump(existing, fh, indent=2, ensure_ascii=False)

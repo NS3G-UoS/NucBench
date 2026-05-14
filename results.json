@@ -2008,5 +2008,1117 @@
         "marks": 5
       }
     ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-13T20:36:40.293799+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image180.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image49.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Churn",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image180.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image49.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Churn",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-13T20:37:01.726847+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.75,
+    "std_deviation": 0.5,
+    "scores": [
+      1,
+      1,
+      0,
+      1
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image19.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 1,
+        "image": "image139.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "image": "image185.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image145.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Taylor Bubble",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:15:11.784715+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:15:56.434771+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:15:58.925403+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "moondream:v2",
+    "timestamp": "2026-05-14T08:26:26.704383+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "moondream:v2",
+    "timestamp": "2026-05-14T08:26:30.881176+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "moondream:v2",
+    "timestamp": "2026-05-14T08:28:31.724074+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "P51",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.07",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "A",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "B624",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.15",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "A",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "B6507",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.23",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "A",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P1329",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.04",
+        "type": "Quantitative",
+        "key_answer": "D",
+        "response": "\n A. 8.6, 30.1amps",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:32:44.104343+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image181.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image25.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image10.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image86.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:34:44.158665+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      0,
+      1,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "P3906",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.18",
+        "type": "Qualitative",
+        "key_answer": "C",
+        "response": "B. The alpha particle pulse will be larger in amplitude. This is because, despite having a lower penetration power due to its higher mass and charge (which cause it to interact more readily with matter), an alpha particle carries twice as much ionizing force per unit path length compared to beta particles when they are of the same kinetic energy. Therefore, for equal energies, alpha particles will produce larger pulses in a Geiger-Mueller detector due to their greater interaction rate and thus higher localized ionization density along its track before it comes to rest within the gas medium.",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "P624",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.16",
+        "type": "Qualitative",
+        "key_answer": "B",
+        "response": "D. Throttled, to ensure adequate pump net positive suction head. When starting a large motor-driven radial-flow centrifugal pump in nuclear engineering applications where maintaining the integrity of the water level and preventing cavitation are critical for safety reasons, throttling is used instead of fully opening it. Throttling helps to control the flow rate entering into the impeller which can reduce mechanical stress on both motor and pump during startup while ensuring that there's enough net positive suction head available (NPSHa) at the inlet side for safe operation without causing cavitation, thus maintaining system integrity.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P2440",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.08",
+        "type": "Qualitative",
+        "key_answer": "B",
+        "response": "B. 6 o'clock\n\nWhen a synchronous generator is being paralleled to an infinite power system, it must match the grid frequency and phase angle before connection can occur safely. The synchroscope pointer indicates this phase relationship between the generator output voltage (also known as electrical rotor speed) and the incoming grid voltage. At 6 o'clock on a clock face representation of these phases, they are exactly out of phase with each other by half a cycle or 180 degrees. This is when it would be safe to connect because both systems will have synchronized frequency but opposite-phase voltages which can cancel each other without causing any issues in the grid due to their equal magnitudes and opposing phases, effectively doubling the current flow into the system for a moment before settling down as if two identical generators were connected.",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "question_id": "B2776",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.23",
+        "type": "Quantitative",
+        "key_answer": "A",
+        "response": "C. 8 Btu/lbm",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Undergraduate Nuclear Engineering Exam",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:48:25.781369+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "RAD_FE_Q1b",
+        "topic": "Nuclear Instrumentation & Measurement",
+        "type": "Quantitative",
+        "key_answer": "Probability of no interaction = 1 − μ = 1 − 0.458 = 0.542 cm⁻¹",
+        "response": "To find the probability per unit distance (\\(P\\)) that a gamma-ray does not interact with the absorber, we can use Beer's Law for attenuation: \\(I = I_0 e^{-\\mu x}\\), where \\(I\\) is the intensity after passing through material of thickness \\(x\\), and \\(I_0\\) is the initial intensity.\n\nFirstly, calculate the transmission coefficient (\\(T\\)) with absorber present using counts detected over time: \n\\[ T = \\frac{2000}{1800} \\] (since detector without absorber reads for a shorter period)\n\nNow find \\(I/I_0\\) from this ratio and solve Beer's Law equation to get \\(\\mu x\\). Then, calculate the probability per unit distance (\\(P\\)) that gamma ray does not interact: \n\\[ P = e^{-\\mu} \\]\n\nGiven data for calculation is as follows (with time conversion):\n- With absorber present counts over \\(20 \\text{ min}\\): \\(\\frac{2000}{1800}\\) times the rate without it.\n- Without absorber, det",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "RTH_FE_Q2",
+        "topic": "Reactor Thermal-Hydraulics",
+        "type": "Quantitative",
+        "key_answer": "(a) G = m_dot/A = 0.0754/(π×0.004²) = 1500 kg/m²s. (b) At 100 bar, T_sat≈311°C; inlet is subcooled, x_in < 0. (c) q_total = q''×π×D×L; h_exit = h_in + q_total/m_dot. (d) x_exit = (h_exit − h_f)/h_fg. (e) CHF from lookup table at given G, P, x. (f) Dryout precluded if q'' < CHF.",
+        "response": "(a) Mass Flux = 0.15 kg/s  \n(b) Inlet Quality = 0%  \n(c) Exit Enthalpy = 3274 kJ/kg  \n(d) Exit Quality = 98.6% (assuming saturation temperature at operating pressure is reached before exiting the pipe, which would need to be confirmed with steam tables or appropriate software.)  \n(e) CHF from lookup table for water @100 bar and given heat flux approximates as: 3274 kJ/kg (this value should ideally come directly from a reliable thermodynamic property database or chart, but here it is assumed to match the exit enthalpy.)  \n(f) Is Dryout Precluded? Yes. Given that water enters at high temperature and sufficient pressure prevents vaporization within this pipe length under these conditions (this would need confirmation with appropriate steam tables).",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RTH_MT_Q1b",
+        "topic": "Reactor Thermal-Hydraulics",
+        "type": "Qualitative",
+        "key_answer": "Smaller. Gases have significantly lower heat transfer coefficients (HTC) than liquids, so the rod would lose less heat if placed in air.",
+        "response": "The rate of convective heat transfer from a surface to a fluid is governed by Newton's law of cooling. According to this principle, if we increase the temperature difference between the hot rod and its surroundings (increase in \\( \\Delta T \\)), then for natural or forced convection scenarios where all other factors remain constant, the heat transfer rate will also be higher due to a larger driving force for energy exchange.\n\nIn this case, if we replace water with air as the cooling medium and maintain everything else (like rod material properties) unchanged: \n- The temperature of hot rod remains at \\( T_{rod} = 310°C \\)\n- Air flow is assumed to be constant or similar in nature compared to previous conditions.\n\nThe heat transfer coefficient for air, which depends on the type and speed of convection (natural vs forced), will typically result in a lower value than water due to its higher thermal conductivity but also because it has different specific heat capacity properties that affect how quickly temperature changes occur within itself as compared to liquids.\n\nHowever, since we are not given details about the flow regime or whether natural convection is occurring (which would be",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RTH_FE_Q4",
+        "topic": "Reactor Thermal-Hydraulics",
+        "type": "Quantitative",
+        "key_answer": "Homogeneous two-phase density: α from quality x=0.2. ρ_mix=(1−α)×ρ_water + α×ρ_steam = 2.946 kg/m³. Driving pressure = (ρ_water − ρ_mix)×g×H = (958.47−2.946)×9.81×3 = 28121 Pa. Apply this to friction loss equation to find mass flow rate.",
+        "response": "To calculate the mass flow rate (ṁ), we need to apply energy and momentum balance equations for a two-phase fluid in piping systems considering steam quality, pressure drop due to friction, and heat exchange at pipe junctions:\n\n1. Calculate specific enthalpies using steam tables or appropriate software based on the given pressures and qualities (20% vapor). \n2. Apply energy balance equations for each section of piping considering inlet/outlet states, pressure drops due to friction losses calculated by Darcy-Weisbach equation with f=0.02 as a rough estimate or using more accurate methods like the Colebrook-White equation if necessary (for this example we'll use an estimated value).\n3. Apply momentum balance equations for each pipe section, considering that vertical pipes will have different velocities due to gravitational potential energy differences compared to horizontal ones and friction losses as calculated in step 2.\n4. Combine the mass flow rates from all sections using continuity equation ensuring conservation of mass (ṁ_total = ṁ1 + ṁ3).\n5. Solve for unknowns iteratively",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:50:40.148697+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "P561",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.14",
+        "type": "Quantitative",
+        "key_answer": "C",
+        "response": "B. Negative, then positive",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "B3327",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.06",
+        "type": "Qualitative",
+        "key_answer": "A",
+        "response": "B. Instantaneous overcurrent. Given that there were multiple starts and stops within a short period, it is likely the motor experienced high inrush currents each time which could exceed its instantaneous trip settings on an overcurrent relay leading to frequent trips. Motor thermal overload might also be considered if this was sustained for longer periods but since only 5 minutes are mentioned with multiple starts and stops, immediate current issues seem more probable.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "B2051",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.07",
+        "type": "Qualitative",
+        "key_answer": "C",
+        "response": "B. stabilize at negative 100 seconds; zero\n\nWhen control rods are inserted into a reactor, they absorb neutrons that would otherwise contribute to the chain reaction. Inserting them until a specific period is achieved (in this case, -100 seconds) means you've reduced reactivity below criticality temporarily. Once motion of these rods ceases and assuming no other changes in reactor conditions or external influences occur that would affect neutron economy significantly, the system will begin to return towards a state where it can sustain its own power output without further control rod adjustments—this is known as reaching an equilibrium subcritical multiplication source range level. At this point and beyond (assuming no xenon transients or other reactivity feedback mechanisms are at play), the reactor will approach zero in terms of neutron population growth, which corresponds to a stable power output that does not increase without further control rod adjustments—hence stabilizing at negative 100 seconds and approaching zero.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P385",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.25",
+        "type": "Quantitative",
+        "key_answer": "C",
+        "response": "B. 734 psia",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:52:13.141141+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:54:28.999130+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:54:31.417933+00:00",
+    "n_samples": 0,
+    "mean_accuracy": 0.0,
+    "std_deviation": 0.0,
+    "scores": [],
+    "details": []
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T08:55:34.085490+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image148.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 1,
+        "image": "image06.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image200.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image218.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Undergraduate Nuclear Engineering Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T08:57:11.230568+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.5,
+    "std_deviation": 0.57735,
+    "scores": [
+      1,
+      0,
+      1,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "NPR_FE_Q3c",
+        "topic": "Nuclear Power Plants",
+        "type": "Qualitative",
+        "key_answer": "2019: approximately 8000 MWe. 2020: approximately 9000 MWe.",
+        "response": "# Dubai Monthly Peak Power Demand Analysis\n\n## Peak Load Estimates\n\nBased on the provided data:\n\n**2019 Peak Load:** **8,900 MW** (September)\n\n**2020 Peak Load:** **9,400 MW** (August)\n\n## Summary\n\n| Year | Peak Month | Peak Demand (MW) |\n|------|-----------|------------------|\n| 2019 | September | 8,900 |\n| 2020 | August | 9,400 |\n\n## Key Observations\n\n1. **Year-over-year increase:** 500 MW (5.6% growth)\n2. **Seasonal pattern:** Both years show peak demand during summer months (June-September), driven by air conditioning loads in the hot desert climate\n3. **2020 shift:** The peak shifted one month earlier (August vs. September), possibly due to weather variations or operational factors\n\n---\n\n**Note:** This analysis is based on the provided data and represents a straightforward demand forecasting exercise. In actual utility planning, additional factors such as economic growth, population changes, and infrastructure development would be considered for more comprehensive projections.",
+        "score": 1
+      },
+      {
+        "run": 1,
+        "question_id": "RAD_MT_Q1a",
+        "topic": "Nuclear Instrumentation & Measurement",
+        "type": "Qualitative",
+        "key_answer": "Discrete: (i) Conversion electrons, (ii) Auger electrons, (v) Annihilation radiation. Continuous: (iii) Fission fragments, (iv) Bremsstrahlung.",
+        "response": "# Radiation Source Energy Spectra Classification\n\n## Answer:\n\n| Radiation Source | Spectrum Type | Reasoning |\n|---|---|---|\n| (i) Conversion electrons | **Discrete** | Ejected from specific nuclear energy levels; each transition produces electrons at characteristic energies |\n| (ii) Auger electrons | **Discrete** | Result from filling specific atomic shell vacancies; energies correspond to defined transitions between shells |\n| (iii) Fission fragments | **Continuous** | Kinetic energy distribution is continuous due to random division of excitation energy between fragments |\n| (iv) Bremsstrahlung | **Continuous** | Photons produced by electron deceleration can have any energy from zero up to the electron's kinetic energy |\n| (v) Annihilation radiation | **Discrete** | Produces characteristic 511 keV gamma rays (or 1.022 MeV for electron-positron pair); fixed energy |\n\n## Key Distinctions:\n\n**Discrete spectra** arise from transitions between well-defined energy states (conversion electrons, Auger electrons, annihilation radiation).\n\n**",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RRT_FE_Q6a",
+        "topic": "Reactor Theory",
+        "type": "Qualitative",
+        "key_answer": "(1/v_g)(∂φ_g/∂t) = rate of change in neutron flux. −∇·D_g∇φ_g = leakage term. Σ_tg×φ_g = total interaction (removal). χ_g∑νΣ_fg'φ_g' = fission source. ∑Σ_s(g'→g)φ_g' = in-scattering source. S_g = external source.",
+        "response": "# Multi-Group Diffusion Equation: Term-by-Term Explanation\n\n## Left-Hand Side (Loss Terms)\n\n**1/v_g (∂φ_g/∂t)**\n- Time-dependent term representing the rate of change of neutron flux\n- v_g = neutron velocity in energy group g\n- φ_g = neutron flux in group g (neutrons/cm²·s)\n- This term accounts for neutron population changes over time\n\n**−∇·D_g∇φ_g**\n- Diffusion term (leakage)\n- D_g = diffusion coefficient for group g\n- ∇²φ_g = Laplacian of flux (spatial variation)\n- Represents neutrons escaping the system due to spatial gradients\n\n**Σ_tg × φ_g**\n- Total macroscopic cross-section removal term\n- Σ_tg = total macroscopic cross-section (absorption + scattering)\n- Represents all neutrons removed from group g through any interaction\n\n---\n\n## Right-Hand Side (Source Terms",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "question_id": "RP_FE_Q3a",
+        "topic": "Reactor Physics",
+        "type": "Quantitative",
+        "key_answer": "β_eff at BOC = 0.0065 (all U-235). β_eff at EOC = 0.9×0.0065 + 0.1×0.0021 = 0.00606. Decrease of approximately 6.8%.",
+        "response": "I need to find the effective β at BOC and EOC, then calculate the percent change.\n\n**At BOC (Beginning of Cycle):**\n- 100% of power from U-235\n- β_eff(BOC) = 0.0065\n\n**At EOC (End of Cycle):**\n- 90% of power from U-235\n- 10% of power from Pu-239\n- β_eff(EOC) = 0.90(0.0065) + 0.10(0.0021)\n- β_eff(EOC) = 0.00585 + 0.00021\n- β_eff(EOC) = 0.00606\n\n**Percent Change:**\n- % change = [(β_eff(EOC) - β_eff(BOC))/β_eff(BOC)] × 100\n- % change = [(0.00606 - 0.0065)/0.0065] × 100\n- % change = [-0.00044/0.0065] × 100\n- % change",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T08:57:40.715872+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      0,
+      0,
+      1
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "P5819",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.11",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "# Analysis of Ion Exchanger Behavior After Crud Burst\n\n## Understanding the Scenario\n\n- **Crud burst**: Release of corrosion products (primarily iron and nickel oxides) into the coolant during cooldown\n- **Fresh resin**: High capacity, not yet saturated\n- **Stable chemistry**: Crud has settled; no new releases occurring\n- **No operator actions**: System operates normally\n\n## Expected Trends\n\n### Inlet Conductivity (Option A)\nAfter 10 minutes with stable chemistry, the crud burst has concluded and the coolant chemistry has stabilized. The inlet conductivity should remain relatively **stable**, not increase.\n\n### Outlet Conductivity (Option B) ✓\nThis is the correct answer. Here's why:\n\n1. **Fresh resin removes ions effectively** - The new ion exchanger rapidly removes corrosion products and dissolved ionic species from the inlet water\n2. **Resin saturation occurs gradually** - As the resin exchanges ions, its capacity diminishes\n3. **Breakthrough begins** - After several hours of operation, the resin begins to saturate with the absorbed ions\n4. **Outlet conductivity",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "P1554",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.05",
+        "type": "Quantitative",
+        "key_answer": "B",
+        "response": "# Solution\n\nControl rod worth is proportional to the thermal neutron flux at the control rod tip location.\n\n**Initial condition:**\n- Control rod tip flux = 5.0 × 10¹² n/cm²-sec\n\n**Final condition (after insertion):**\n- Control rod tip flux = 1.0 × 10¹³ n/cm²-sec\n\n**Factor of increase:**\n\n$$\\frac{\\text{Final flux}}{\\text{Initial flux}} = \\frac{1.0 \\times 10^{13}}{5.0 \\times 10^{12}} = \\frac{10}{5} = 2$$\n\n**Answer: A. 2**",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P660",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.05",
+        "type": "Quantitative",
+        "key_answer": "B",
+        "response": "D. Less than one-half the 100 percent power equilibrium concentration.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "B1039",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.07",
+        "type": "Qualitative",
+        "key_answer": "A",
+        "response": "# Mixed-Bed Demineralizer Analysis\n\n## Understanding Mixed-Bed Demineralizers\n\nA mixed-bed demineralizer contains both **cation exchange resin** and **anion exchange resin** in a single vessel.\n\n## Anion Exchange Resin Function\n\nThe anion exchange resin specifically:\n- **Releases:** Hydroxide (OH⁻) ions into solution\n- **Removes:** Negatively charged ions (anions) from solution\n\n### How it works:\n- The resin is typically in the OH⁻ form\n- It exchanges hydroxide ions for unwanted anions (like Cl⁻, SO₄²⁻, etc.)\n- The reaction: R-OH + Cl⁻ → R-Cl + OH⁻\n\nThis produces deionized water by:\n1. Cation resin removing cations (H⁺ form)\n2. Anion resin removing anions (OH⁻ form)\n3. H⁺ + OH⁻ → H₂O (neutral water)\n\n##",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T08:59:04.169849+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image97.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image156.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "image": "image133.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image01.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T09:33:16.316009+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.5,
+    "std_deviation": 0.57735,
+    "scores": [
+      1,
+      0,
+      0,
+      1
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "B2153",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.10",
+        "type": "Quantitative",
+        "key_answer": "D",
+        "response": "D. -0.7 Btu/(lbm·°F)",
+        "score": 1
+      },
+      {
+        "run": 1,
+        "question_id": "P4322",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.08",
+        "type": "Qualitative",
+        "key_answer": "A",
+        "response": "D. The most likely cause of severely damaged contact surfaces on a main generator output breaker is when there's an issue related to synchronization between voltage, current, and frequency that the equipment can handle safely. If the frequencies are out of phase or significantly different (0.2 Hz lower in this case), it could lead to improper operation conditions for electrical contacts within a circuit due to arcing at misaligned contact points when they close together under load. This is because synchronization issues often result from problems with power quality, which can cause excessive wear or damage on the breaker's mechanical and electrical components over time.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P1902",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.05",
+        "type": "Qualitative",
+        "key_answer": "B",
+        "response": "A. Removes pressure from the packing/stuffing box and is typically used to isolate the stuffing box for valve repacking. The backseat on a manual valve serves as an additional seating surface, providing extra security against leakage when needed. It's primarily utilized during system shutdown or maintenance procedures such as packing replacement (valve repacking).",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "B2148",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.14",
+        "type": "Qualitative",
+        "key_answer": "A",
+        "response": "To solve this question, we need to understand how reactivity changes in a nuclear reactor after a scram event and the impact of various factors such as xenon buildup (which has a negative effect on reactivity), fuel temperature increase (also negatively affects reactivity due to Doppler broadening), control rod insertion, and void formation.\n\n- Xenon: As it accumulates in the core after a scram event, xenon absorbs neutrons which decreases reactivity; hence we assign (-) 1.0 %ΔK/K to this factor.\n\n- Fuel temperature increase (Doppler broadening): This also reduces reactivity as fuel atoms move apart and absorb more thermal energy without emitting radiation, thus reducing the probability of fission reactions occurring; we assign (-) 2.0 %ΔK/K to this factor.\n\n- Control rods: These are inserted into the core during a scram event to rapidly decrease reactivity by absorbing neutrons and stopping nuclear chain reactions; when removed, they increase reactivity back towards zero or negative values if not fully withdrawn completely. Since we're considering that all",
+        "score": 1
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "phi3:mini",
+    "timestamp": "2026-05-14T09:40:10.381959+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image114.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image165.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image112.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image116.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T09:41:21.895609+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      1,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image152.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Taylor Bubble",
+        "score": 1
+      },
+      {
+        "run": 1,
+        "image": "image15.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image188.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Churn",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image155.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Slug",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T09:42:20.066286+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.5,
+    "std_deviation": 0.57735,
+    "scores": [
+      0,
+      1,
+      1,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "P4915",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.04",
+        "type": "Quantitative",
+        "key_answer": "B",
+        "response": "# Analysis\n\n**Centrifugal Pump Behavior:**\n- Flow rate is highly dependent on system backpressure\n- As backpressure increases from 400 to 600 psig, flow rate **decreases significantly**\n- Power requirement increases with backpressure, so motor current **increases**\n\n**Positive Displacement Pump (PDP) Behavior:**\n- Flow rate is **independent of backpressure** (maintains ~200 gpm)\n- Backpressure increase causes pressure rise but not flow reduction\n- Motor current increases with backpressure, but less dramatically than centrifugal\n\n**Comparison at 600 psig:**\n- Centrifugal pump flow: **Lower** than PDP (reduced due to increased backpressure)\n- Centrifugal pump current: **Higher** than PDP (increased pressure requires more power to maintain operation against higher resistance)\n\n**Answer: A. lower; higher**",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "P7673",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.08",
+        "type": "Qualitative",
+        "key_answer": "B",
+        "response": "# Answer: B. Offset\n\n## Explanation:\n\nA **proportional-only controller** has a characteristic **steady-state offset** (also called \"droop\") that does not exist in a proportional-integral (PI) controller.\n\n### Key Differences:\n\n**Proportional-Only Controller:**\n- Output: U(t) = K_p × e(t)\n- Cannot eliminate steady-state error\n- Will always have an offset between setpoint and actual value at steady state\n- Requires a non-zero error to maintain a non-zero output\n\n**Proportional-Integral Controller:**\n- Output: U(t) = K_p × e(t) + K_i × ∫e(t)dt\n- The integral term accumulates error over time\n- Can drive steady-state error to zero\n- No offset at steady state\n\n### Why the other options don't apply:\n\n- **A. Gain** - Both controllers have proportional gain (K_p)\n- **C. Rate component** - This refers to derivative action (D), which neither has\n- **D. Bistable component** - This is not a",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "question_id": "B5608",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.01",
+        "type": "Qualitative",
+        "key_answer": "A",
+        "response": "# Analysis of Proportional Controller Behavior\n\nLet me work through how increasing controller gain affects offset and proportional band.\n\n## Effect on Offset (Steady-State Error)\n\nFor a proportional-only controller:\n- **Offset** is the steady-state error between setpoint and actual value\n- Offset is inversely related to controller gain\n- Higher gain → smaller offset\n- Lower gain → larger offset\n\n**Therefore: Increasing gain will DECREASE the offset**\n\n## Effect on Proportional Band\n\nThe proportional band (PB) is defined as:\n\n$$PB = \\frac{100\\%}{K_p}$$\n\nwhere K_p is the controller gain (in %/%)\n\n- Proportional band is inversely proportional to gain\n- Higher gain → narrower proportional band (smaller PB)\n- Lower gain → wider proportional band (larger PB)\n\n**Therefore: Increasing gain will DECREASE the proportional band**\n\n## Answer\n\n**A. decrease; decrease**\n\nWhen controller gain increases:\n1. The offset **decreases** (steady-state error reduces)\n2. The proportional band **decreases",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "question_id": "B2005",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.12",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "# Gate Valve vs. Globe Valve Comparison\n\nLet me analyze the key characteristics of each valve type:\n\n## Pressure Drop When Fully Open\n\n**Gate Valve:**\n- Has a straight, unobstructed flow path when fully open\n- Minimal flow resistance\n- **Lower pressure drop**\n\n**Globe Valve:**\n- Has an internal baffle/seat that creates flow obstruction even when fully open\n- Flow must change direction multiple times\n- Higher pressure drop\n\n## Suitability for Throttling\n\n**Gate Valve:**\n- Designed for on/off service (fully open or fully closed)\n- Poor throttling characteristics due to:\n  - Abrupt flow changes with small stem movements\n  - Difficult to control flow precisely\n  - Risk of cavitation and erosion when partially open\n- **Poorer choice for throttling**\n\n**Globe Valve:**\n- Designed specifically for throttling and flow control\n- Excellent throttling characteristics due to:\n  - Gradual, linear flow control\n  - Better pressure regulation\n  - More stable operation at partial opening\n- **Better choice for throttling**\n\n## Answer\n\n**B",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Undergraduate Nuclear Engineering Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T09:43:11.770867+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "RAD_FE_Q3b",
+        "topic": "Nuclear Instrumentation & Measurement",
+        "type": "Quantitative",
+        "key_answer": "E(r) = V / (r×ln(b/a)). At r=0.00025m: E=1.338 MV/m. At r=0.00155m: E=0.216 MV/m. Maximum radius for multiplication (E=1.0 MV/m): r_max ≈ 0.000335 m",
+        "response": "I need to find the electric field in a cylindrical proportional tube and determine the maximum radius for gas multiplication.\n\n**Given:**\n- Anode radius: a = 0.0025 cm = 0.000025 m\n- Cathode radius: b = 1.8 cm = 0.018 m\n- Applied voltage: V = 2200 V\n- Threshold field: E_min = 1.0 MV/m = 1.0 × 10⁶ V/m\n\n**Electric field in cylindrical geometry:**\n\n$$E(r) = \\frac{V}{\\ln(b/a)} \\cdot \\frac{1}{r}$$\n\nFirst, calculate ln(b/a):\n$$\\ln(b/a) = \\ln(0.018/0.000025) = \\ln(720) = 6.579$$\n\n**At r = 0.00025 m:**\n$$E = \\frac{2200}{6.579 \\times 0.00025} = \\frac{2200}{0.001645} = ",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "FC_FE_Q5",
+        "topic": "Nuclear Fuel Cycle",
+        "type": "Quantitative",
+        "key_answer": "EFPD1=(600/1000)×10=6; EFPD2=(900/1000)×20=18; EFPD3=(750/1000)×40=30; EFPD4=(800/1000)×30=24; EFPD5=(950/1000)×20=19. Total EFPD = 6+18+30+24+19 = 97 EFPD",
+        "response": "91.25 days",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "MAT_FE_Q2b",
+        "topic": "Nuclear Materials",
+        "type": "Quantitative",
+        "key_answer": "(a) σ_m = 0 MPa (reversed loading). (b) Stress range σ_r = σ_max − σ_min = 300 MPa. (c) Stress amplitude σ_a = 150 MPa. (d) Fatigue life ≈ 1×10⁵ cycles (from red brass S-N curve).",
+        "response": "# Solution\n\n**Given:**\n- Diameter: d = 8.0 mm\n- Maximum tensile load: F_max = +7500 N\n- Maximum compressive load: F_min = −7500 N\n\n**Cross-sectional area:**\nA = π(d/2)² = π(4.0)² = 50.27 mm²\n\n**Stress calculations:**\n- σ_max = 7500 N / 50.27 mm² = 149.2 MPa\n- σ_min = −7500 N / 50.27 mm² = −149.2 MPa\n\n**(a) Mean stress:**\nσ_m = (σ_max + σ_min)/2 = (149.2 − 149.2)/2 = **0 MPa**\n\n**(b) Stress range:**\nΔσ = σ_max − σ_min = 149.2 − (−149.2) = **298.4 MPa**\n\n**(c) Stress amplitude:**\nσ_a =",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RAD_MT_Q2b",
+        "topic": "Nuclear Instrumentation & Measurement",
+        "type": "Quantitative",
+        "key_answer": "Fraction = exp(−μ×ρ×t) = exp(−0.7714 × 2700 × 0.0001) = exp(−0.2083) ≈ 0.812 (81.2%)",
+        "response": "0.815",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T09:58:34.089596+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image138.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Churn",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image113.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "image": "image11.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image11.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "churn",
+        "response": "Bubbly",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Undergraduate Nuclear Engineering Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T09:59:47.032925+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0,
+    "std_deviation": 0.0,
+    "scores": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "MAT_FE_Q1b",
+        "topic": "Nuclear Materials",
+        "type": "Qualitative",
+        "key_answer": "Metallic vs Ceramic: Neutron economy (higher / lower), Thermal conductivity (higher / lower), Strength (low at high temperatures / very high), Thermal expansion (high / low), Corrosion resistance (low / high), Radiation stability (poor - swelling & creep / good), Melting point (lower / higher).",
+        "response": "# Comparison Table: Metallic vs. Ceramic Nuclear Fuels\n\n| Parameter | Metallic Fuel (U, U-Mo alloys) | Ceramic Fuel (UO₂) |\n|-----------|--------------------------------|-------------------|\n| **Neutron Economy** | Better (lower parasitic absorption, higher η) | Worse (oxygen absorbs neutrons) |\n| **Thermal Conductivity** | High (~25 W/m·K at 100°C) | Low (~6 W/m·K at 100°C) |\n| **Strength** | Lower (soft, ductile) | Higher (brittle, but strong in compression) |\n| **Thermal Expansion** | Higher (~15 × 10⁻⁶ /K for U) | Lower (~13 × 10⁻⁶ /K for UO₂) |\n| **Corrosion Resistance** | Poor (oxidizes readily in water) | Excellent (chemically stable in coolant) |\n| **Radiation Stability** | Poor (swelling, creep, dimensional changes)",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "RTH_FE_Q3b",
+        "topic": "Reactor Thermal-Hydraulics",
+        "type": "Quantitative",
+        "key_answer": "Steady-state: T_fuel = T_coolant + q'/(h×π×D_clad_outer). The fuel is damaged because the computed fuel temperature exceeds 1200°C.",
+        "response": "I need to find the fuel temperature at steady state with coolant at 630°C and determine if the fuel is damaged.\n\nHowever, I notice this question references \"the same fuel rod\" from a previous problem that I don't have access to. Without the specific parameters from that problem (such as heat generation rate, rod dimensions, thermal conductivities, gap conductance, etc.), I cannot calculate the exact fuel temperature.\n\nTo solve this properly, I would need:\n- Heat generation rate (q''' or total power)\n- Fuel rod outer radius and cladding thickness\n- Thermal conductivity of fuel and cladding\n- Gap conductance or gap width\n- Convection coefficient or heat transfer correlation\n\n**I cannot provide a numerical answer without the complete problem statement from the previous part.**\n\nIf you can provide the missing parameters or the complete original problem, I can calculate:\n1. Temperature drop across cladding\n2. Temperature drop across fuel-cladding gap\n3. Temperature drop across fuel\n4. Peak fuel temperature\n5. Whether it exceeds 1200°C (cladding oxidation limit)\n\nPlease provide the complete problem context.",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RAD_MT_Q1a",
+        "topic": "Nuclear Instrumentation & Measurement",
+        "type": "Qualitative",
+        "key_answer": "Discrete: (i) Conversion electrons, (ii) Auger electrons, (v) Annihilation radiation. Continuous: (iii) Fission fragments, (iv) Bremsstrahlung.",
+        "response": "# Radiation Source Energy Spectra Classification\n\n## Answers:\n\n| Radiation Source | Spectrum Type | Reasoning |\n|---|---|---|\n| (i) Conversion electrons | **Discrete** | Ejected from specific nuclear energy levels; have characteristic energies corresponding to nuclear transitions |\n| (ii) Auger electrons | **Discrete** | Emitted from specific atomic shell transitions; have characteristic energies determined by atomic structure |\n| (iii) Fission fragments | **Continuous** | Kinetic energy distribution is continuous; fragments share variable amounts of energy from fission |\n| (iv) Bremsstrahlung | **Continuous** | Produced by deceleration of charged particles; can emit any energy up to the particle's kinetic energy |\n| (v) Annihilation radiation | **Discrete** | Produces characteristic 511 keV gamma rays (or 1.022 MeV for electron-positron pair); fixed energy from rest mass conversion |\n\n## Summary:\n- **Discrete:** (i), (ii), (v)\n- **Continuous:** (iii), (iv)\n\nThe key",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "RP_FE_Q4a",
+        "topic": "Reactor Physics",
+        "type": "Qualitative",
+        "key_answer": "dI/dt = γ_I × Σ_fT × φ_T − λ_I × I. dX/dt = γ_X × Σ_fT × φ_T + λ_I × I − λ_X × X − σ_aX × φ_T × X",
+        "response": "# Balance Equations for Xe-135 and I-135\n\n## I-135 Balance Equation\n\n$$\\frac{dN_{I}}{dt} = \\gamma_I \\Sigma_f \\phi - \\lambda_I N_I$$\n\nWhere:\n- $N_I$ = number density of I-135\n- $\\gamma_I$ = fission yield of I-135 (~6.4%)\n- $\\Sigma_f$ = macroscopic fission cross-section\n- $\\phi$ = neutron flux\n- $\\lambda_I$ = decay constant of I-135 (half-life ≈ 6.57 hours)\n\n**Physical interpretation:** I-135 is produced by fission and removed only by beta decay (to Xe-135).\n\n## Xe-135 Balance Equation\n\n$$\\frac{dN_{Xe}}{dt} = \\gamma_{Xe} \\Sigma_f \\phi + \\lambda_I N_I - \\lambda_{Xe} N_{Xe} - \\sigma_{Xe} \\phi N_{Xe}",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "Two-Phase Flow Regime Classification",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T10:02:02.962196+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.25,
+    "std_deviation": 0.5,
+    "scores": [
+      0,
+      1,
+      0,
+      0
+    ],
+    "details": [
+      {
+        "run": 1,
+        "image": "image124.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "slug",
+        "response": "Bubbly",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "image": "image97.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "bubbly",
+        "response": "Bubbly",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "image": "image123.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Slug",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "image": "image67.png",
+        "fluid": "Fluid 1_Air",
+        "true_label": "taylor",
+        "response": "Bubbly",
+        "score": 0
+      }
+    ]
+  },
+  {
+    "task": "GFE Reactor Operator Exam",
+    "model": "claude-haiku-4-5",
+    "timestamp": "2026-05-14T10:10:41.172864+00:00",
+    "n_samples": 4,
+    "mean_accuracy": 0.5,
+    "std_deviation": 0.57735,
+    "scores": [
+      0,
+      0,
+      1,
+      1
+    ],
+    "details": [
+      {
+        "run": 1,
+        "question_id": "B1093",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.07",
+        "type": "Qualitative",
+        "key_answer": "D",
+        "response": "# Answer: **A. Fission product gas expansion causes fuel rod internal design pressure to be exceeded.**\n\n## Explanation:\n\nWhen a reactor operates above the linear heat generation rate (LHGR) limit, the primary mechanism for cladding failure is **internal pressure buildup** from fission product gases.\n\n### Why Option A is Correct:\n\n1. **Fission gas release increases with temperature**: As fuel temperature rises above the LHGR limit, the release of fission gases (primarily Xe and Kr) from the fuel matrix increases significantly.\n\n2. **Internal pressure exceeds design limits**: These gases accumulate in the fuel rod's plenum space, creating internal pressure that was not accounted for in the original design margin.\n\n3. **Cladding stress and failure**: When internal pressure exceeds the design pressure, the cladding experiences excessive hoop stress, leading to:\n   - Plastic deformation\n   - Potential rupture or ballooning\n   - Loss of coolant contact and further temperature rise\n\n### Why Other Options Are Incorrect:\n\n- **B**: Corrosion buildup is a long-term degradation mechanism, not",
+        "score": 0
+      },
+      {
+        "run": 1,
+        "question_id": "B2817",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.06",
+        "type": "Qualitative",
+        "key_answer": "B",
+        "response": "# Analysis of Diesel Generator Response to Load Trip\n\n## Initial Condition\n- DG operating in **speed droop mode** (isochronous droop governor)\n- Bus is initially at steady-state frequency (typically 60 Hz)\n- Large load suddenly trips (load decreases)\n\n## Step-by-Step Response\n\n### 1. **Immediate Effect (Load Trip)**\nWhen the large load trips:\n- Electrical load on the generator suddenly decreases\n- Generator power output > electrical demand\n- Excess power accelerates the rotor\n- **Bus frequency INCREASES** ✓\n\n### 2. **Governor Response (Speed Droop Mode)**\nThe droop governor detects the frequency increase:\n- Senses rising frequency\n- Reduces fuel injection to the diesel engine\n- Engine power output decreases\n- This opposes the frequency rise\n\n### 3. **Stabilization**\nWith droop mode operation:\n- The governor reduces power proportionally to frequency increase\n- System reaches a new equilibrium at a **higher frequency than initial**\n- In droop mode, frequency does NOT return to the original setpoint\n- The new stable frequency",
+        "score": 0
+      },
+      {
+        "run": 2,
+        "question_id": "P251",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.03",
+        "type": "Qualitative",
+        "key_answer": "C",
+        "response": "# Answer: **C. Low reactor coolant temperature at the beginning of a fuel cycle.**\n\n## Explanation:\n\nThe **moderator temperature coefficient (MTC)** describes how reactivity changes with moderator temperature. A positive MTC means reactivity increases when moderator temperature increases (undesirable for safety).\n\n### Key Physics:\n\n1. **Moderator temperature effects on reactivity:**\n   - When moderator temperature increases, the neutron energy spectrum hardens (neutrons are less thermalized)\n   - This reduces the thermal neutron absorption cross-section in the moderator\n   - The net effect on reactivity depends on the **boron concentration** in the coolant\n\n2. **Boron concentration variation:**\n   - **Beginning of fuel cycle:** High boron concentration (needed to control excess reactivity from fresh fuel)\n   - **End of fuel cycle:** Low boron concentration (boron has been depleted as fuel burns)\n\n3. **Why low temperature + beginning of cycle = positive MTC:**\n   - At **low coolant temperatures** with **high boron concentration**, the moderator is heavily poisoned\n   - When temperature increases, the thermal neutron absorption",
+        "score": 1
+      },
+      {
+        "run": 2,
+        "question_id": "B2416",
+        "reactor_type": "NRC Generic Fundamentals Examination Question Bank - PWR Nov. 2020",
+        "topic": "K1.05",
+        "type": "Quantitative",
+        "key_answer": "B",
+        "response": "# Solution\n\n**Given:**\n- Force required to open valve: F = 3,600 lbf\n- Diaphragm diameter: d = 9 inches\n- Required pressure: P = ?\n\n**Calculate diaphragm area:**\n$$A = \\frac{\\pi d^2}{4} = \\frac{\\pi (9)^2}{4} = \\frac{81\\pi}{4} = 63.62 \\text{ in}^2$$\n\n**Calculate required pressure:**\n$$P = \\frac{F}{A} = \\frac{3,600}{63.62} = 56.55 \\text{ psig}$$\n\n**Answer: B. 57 psig**",
+        "score": 1
+      }
+    ]
   }
 ]

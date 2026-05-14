@@ -5,11 +5,18 @@ Task-runner functions for the three NucBench benchmarks.
 
 Each runner:
   1. Loads its dataset (JSON for exams, image files for flow regime).
-  2. Randomly samples *n_samples* items.
-  3. Calls the LiteLLM API once per item, with *delay_s* seconds between
-     requests to respect provider rate limits.
+  2. Randomly samples *n_samples* items (optionally re-sampling each run).
+  3. Repeats the sample *n_runs* times, calling the LiteLLM API once per
+     item per run, with *delay_s* seconds between requests.
   4. Scores each response and returns a results payload ready for
      ``scoring.save_results()``.
+
+Run modes
+~~~~~~~~~
+* ``unique_per_run=False`` (default): the same *n_samples* questions are
+  used for every run — useful for measuring response variance on a fixed set.
+* ``unique_per_run=True``: a fresh random sample is drawn before each run —
+  useful for broader dataset coverage across repeated runs.
 
 Progress is reported through an optional ``progress_cb`` callable that
 accepts a float in [0.0, 1.0] so the UI can drive a progress bar.
@@ -28,7 +35,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from nucbench.prompts import build_exam_message, build_flow_regime_message
-from nucbench.scoring import extract_confidence_score, score_exam_response, score_flow_regime_response
+from nucbench.scoring import score_exam_response, score_flow_regime_response
 
 # ---------------------------------------------------------------------------
 # Repo-relative data paths
@@ -93,21 +100,42 @@ def _call_llm(
     api_key: str,
     temperature: float,
     messages: List[Dict[str, Any]],
+    api_base: Optional[str] = None,
 ) -> str:
     """Make a single LiteLLM completion call and return the response text.
+
+    When *api_base* is set (local mode) the model name and base URL are
+    normalised through ``resolve_local_model`` so that Ollama and any other
+    OpenAI-compatible local server are routed correctly regardless of the
+    provider prefix the user typed.
 
     Raises the original LiteLLM exception on failure so callers can decide
     how to handle rate limits, auth errors, etc.
     """
     import litellm
+    from nucbench.models import resolve_local_model
 
-    response = litellm.completion(
-        model=model,
+    resolved_model = model
+    resolved_base = api_base
+
+    if api_base:
+        resolved_model, resolved_base = resolve_local_model(model, api_base)
+
+    kwargs: Dict[str, Any] = dict(
+        model=resolved_model,
         messages=messages,
-        api_key=api_key,
         temperature=temperature,
         max_tokens=256,
     )
+    if api_key:
+        kwargs["api_key"] = api_key
+    elif api_base:
+        # LiteLLM's openai provider requires a non-empty key; local servers ignore it.
+        kwargs["api_key"] = "local"
+    if resolved_base:
+        kwargs["api_base"] = resolved_base
+
+    response = litellm.completion(**kwargs)
     return response.choices[0].message.content or ""
 
 
@@ -134,20 +162,25 @@ def run_flow_regime_task(
     api_key: str,
     temperature: float,
     n_samples: int,
-    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
+    api_base: Optional[str] = None,
+    n_runs: int = 1,
+    unique_per_run: bool = False,
 ) -> Dict[str, Any]:
     """Benchmark the model on two-phase flow regime image classification.
 
     Args:
-        model:       LiteLLM model identifier.
-        api_key:     Provider API key.
-        temperature: Sampling temperature.
-        n_samples:   Number of unique images to sample from the dataset.
-        n_runs:      Number of times to repeat the prompt for each image.
-        delay_s:     Seconds to wait between consecutive API calls.
-        progress_cb: Optional callback receiving progress in [0.0, 1.0].
+        model:          LiteLLM model identifier.
+        api_key:        Provider API key (empty string for local models).
+        temperature:    Sampling temperature.
+        n_samples:      Number of images to sample per run.
+        delay_s:        Seconds to wait between consecutive API calls.
+        progress_cb:    Optional callback receiving progress in [0.0, 1.0].
+        api_base:       Optional base URL for local inference servers.
+        n_runs:         How many times to repeat the sample (default 1).
+        unique_per_run: When True, draw a fresh random sample for each run.
+                        When False (default), every run uses the same images.
 
     Returns:
         A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
@@ -157,19 +190,23 @@ def run_flow_regime_task(
     if n_samples > len(all_images):
         n_samples = len(all_images)
 
-    sampled = random.sample(all_images, n_samples)
-    total_requests = n_samples * n_runs
+    # Pre-sample once when every run should see the same questions.
+    fixed_sample = None if unique_per_run else random.sample(all_images, n_samples)
 
+    total_requests = n_samples * n_runs
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
+    request_idx = 0
 
-    for i, (img_path, true_label) in enumerate(sampled):
-        b64, mime = _encode_image(img_path)
-        messages = build_flow_regime_message(b64, mime)
+    for run_idx in range(n_runs):
+        sample = random.sample(all_images, n_samples) if unique_per_run else fixed_sample
 
-        for run_idx in range(n_runs):
+        for img_path, true_label in sample:
+            b64, mime = _encode_image(img_path)
+            messages = build_flow_regime_message(b64, mime)
+
             try:
-                response_text = _call_llm(model, api_key, temperature, messages)
+                response_text = _call_llm(model, api_key, temperature, messages, api_base)
                 score = score_flow_regime_response(response_text, true_label)
             except Exception as exc:  # noqa: BLE001
                 response_text = f"[ERROR] {exc}"
@@ -178,20 +215,19 @@ def run_flow_regime_task(
             scores.append(score)
             details.append(
                 {
+                    "run": run_idx + 1,
                     "image": img_path.name,
-                    "fluid": img_path.parts[-3],   # e.g. "Fluid 1_Air"
+                    "fluid": img_path.parts[-3],
                     "true_label": true_label,
                     "response": response_text,
                     "score": score,
-                    "run": run_idx + 1,
                 }
             )
 
-            request_num = i * n_runs + run_idx + 1
+            request_idx += 1
             if progress_cb:
-                progress_cb(request_num / total_requests)
-
-            if request_num < total_requests:
+                progress_cb(request_idx / total_requests)
+            if request_idx < total_requests:
                 time.sleep(delay_s)
 
     return {
@@ -213,20 +249,25 @@ def run_undergraduate_exam(
     api_key: str,
     temperature: float,
     n_samples: int,
-    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
+    api_base: Optional[str] = None,
+    n_runs: int = 1,
+    unique_per_run: bool = False,
 ) -> Dict[str, Any]:
     """Benchmark the model on the undergraduate nuclear engineering exam.
 
     Args:
-        model:       LiteLLM model identifier.
-        api_key:     Provider API key.
-        temperature: Sampling temperature.
-        n_samples:   Number of unique questions to sample from the dataset.
-        n_runs:      Number of times to repeat the prompt for each question.
-        delay_s:     Seconds to wait between consecutive API calls.
-        progress_cb: Optional callback receiving progress in [0.0, 1.0].
+        model:          LiteLLM model identifier.
+        api_key:        Provider API key (empty string for local models).
+        temperature:    Sampling temperature.
+        n_samples:      Number of questions to sample per run.
+        delay_s:        Seconds to wait between consecutive API calls.
+        progress_cb:    Optional callback receiving progress in [0.0, 1.0].
+        api_base:       Optional base URL for local inference servers.
+        n_runs:         How many times to repeat the sample (default 1).
+        unique_per_run: When True, draw a fresh random sample for each run.
+                        When False (default), every run uses the same questions.
 
     Returns:
         A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
@@ -237,67 +278,52 @@ def run_undergraduate_exam(
     if n_samples > len(questions):
         n_samples = len(questions)
 
-    sampled = random.sample(questions, n_samples)
-    total_requests = n_samples * n_runs
+    fixed_sample = None if unique_per_run else random.sample(questions, n_samples)
 
+    total_requests = n_samples * n_runs
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
+    request_idx = 0
 
-    for i, question in enumerate(sampled):
-        props = question.get("Properties", {})
-        q_text = question.get("Question_Prompt", "")
-        q_type = props.get("Question_Type", "Qualitative")
-        key_answer = str(props.get("Key_Answer", ""))
-        is_mcq = bool(props.get("MCQ", True))
-        marks = props.get("Marks")
+    for run_idx in range(n_runs):
+        sample = random.sample(questions, n_samples) if unique_per_run else fixed_sample
 
-        # Inline images embedded in the question (base64 encoded in the JSON)
-        inline_images: List[Tuple[str, str]] = []
-        for img_entry in question.get("images", []):
-            inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
+        for question in sample:
+            props = question.get("Properties", {})
+            q_text = question.get("Question_Prompt", "")
+            q_type = props.get("Question_Type", "Qualitative")
+            key_answer = str(props.get("Key_Answer", ""))
 
-        messages = build_exam_message(q_text, q_type, inline_images, is_mcq=is_mcq)
+            inline_images: List[Tuple[str, str]] = []
+            for img_entry in question.get("images", []):
+                inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
 
-        for run_idx in range(n_runs):
+            messages = build_exam_message(q_text, q_type, inline_images)
+
             try:
-                response_text = _call_llm(model, api_key, temperature, messages)
-                if is_mcq:
-                    score = score_exam_response(response_text, key_answer)
-                    confidence_score = None
-                    human_grade: Optional[float] = float(score)
-                else:
-                    score = 0  # placeholder; replaced after human grading
-                    confidence_score = extract_confidence_score(response_text)
-                    human_grade = None
+                response_text = _call_llm(model, api_key, temperature, messages, api_base)
+                score = score_exam_response(response_text, key_answer)
             except Exception as exc:  # noqa: BLE001
                 response_text = f"[ERROR] {exc}"
                 score = 0
-                confidence_score = None
-                human_grade = None if not is_mcq else 0.0
 
             scores.append(score)
             details.append(
                 {
+                    "run": run_idx + 1,
                     "question_id": props.get("Question_ID", ""),
                     "topic": props.get("Question_Topic", ""),
                     "type": q_type,
                     "key_answer": key_answer,
-                    "question": q_text,
                     "response": response_text,
                     "score": score,
-                    "run": run_idx + 1,
-                    "format": "MCQ" if is_mcq else "Open-Ended",
-                    "confidence_score": confidence_score,
-                    "human_grade": human_grade,
-                    "marks": marks,
                 }
             )
 
-            request_num = i * n_runs + run_idx + 1
+            request_idx += 1
             if progress_cb:
-                progress_cb(request_num / total_requests)
-
-            if request_num < total_requests:
+                progress_cb(request_idx / total_requests)
+            if request_idx < total_requests:
                 time.sleep(delay_s)
 
     return {
@@ -319,9 +345,11 @@ def run_operator_exam(
     api_key: str,
     temperature: float,
     n_samples: int,
-    n_runs: int = 1,
     delay_s: float = 1.0,
     progress_cb: Optional[Callable[[float], None]] = None,
+    api_base: Optional[str] = None,
+    n_runs: int = 1,
+    unique_per_run: bool = False,
 ) -> Dict[str, Any]:
     """Benchmark the model on the GFE Reactor Operator exam question bank.
 
@@ -329,13 +357,16 @@ def run_operator_exam(
     represents the full 4,292-question bank proportionally.
 
     Args:
-        model:       LiteLLM model identifier.
-        api_key:     Provider API key.
-        temperature: Sampling temperature.
-        n_samples:   Number of unique questions to sample from the dataset.
-        n_runs:      Number of times to repeat the prompt for each question.
-        delay_s:     Seconds to wait between consecutive API calls.
-        progress_cb: Optional callback receiving progress in [0.0, 1.0].
+        model:          LiteLLM model identifier.
+        api_key:        Provider API key (empty string for local models).
+        temperature:    Sampling temperature.
+        n_samples:      Number of questions to sample per run.
+        delay_s:        Seconds to wait between consecutive API calls.
+        progress_cb:    Optional callback receiving progress in [0.0, 1.0].
+        api_base:       Optional base URL for local inference servers.
+        n_runs:         How many times to repeat the sample (default 1).
+        unique_per_run: When True, draw a fresh random sample for each run.
+                        When False (default), every run uses the same questions.
 
     Returns:
         A dict with keys ``scores``, ``details``, ``task_name``, ``model``,
@@ -348,67 +379,53 @@ def run_operator_exam(
     if n_samples > len(all_questions):
         n_samples = len(all_questions)
 
-    sampled = random.sample(all_questions, n_samples)
-    total_requests = n_samples * n_runs
+    fixed_sample = None if unique_per_run else random.sample(all_questions, n_samples)
 
+    total_requests = n_samples * n_runs
     scores: List[int] = []
     details: List[Dict[str, Any]] = []
+    request_idx = 0
 
-    for i, question in enumerate(sampled):
-        props = question.get("Properties", {})
-        q_text = question.get("Question_Prompt", "")
-        q_type = props.get("Question_Type", "Qualitative")
-        key_answer = str(props.get("Key_Answer", ""))
-        is_mcq = bool(props.get("MCQ", True))
-        marks = props.get("Marks")
+    for run_idx in range(n_runs):
+        sample = random.sample(all_questions, n_samples) if unique_per_run else fixed_sample
 
-        inline_images: List[Tuple[str, str]] = []
-        for img_entry in question.get("images", []):
-            inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
+        for question in sample:
+            props = question.get("Properties", {})
+            q_text = question.get("Question_Prompt", "")
+            q_type = props.get("Question_Type", "Qualitative")
+            key_answer = str(props.get("Key_Answer", ""))
 
-        messages = build_exam_message(q_text, q_type, inline_images, is_mcq=is_mcq)
+            inline_images: List[Tuple[str, str]] = []
+            for img_entry in question.get("images", []):
+                inline_images.append((img_entry["data"], img_entry.get("mime", "image/png")))
 
-        for run_idx in range(n_runs):
+            messages = build_exam_message(q_text, q_type, inline_images)
+
             try:
-                response_text = _call_llm(model, api_key, temperature, messages)
-                if is_mcq:
-                    score = score_exam_response(response_text, key_answer)
-                    confidence_score = None
-                    human_grade: Optional[float] = float(score)
-                else:
-                    score = 0  # placeholder; replaced after human grading
-                    confidence_score = extract_confidence_score(response_text)
-                    human_grade = None
+                response_text = _call_llm(model, api_key, temperature, messages, api_base)
+                score = score_exam_response(response_text, key_answer)
             except Exception as exc:  # noqa: BLE001
                 response_text = f"[ERROR] {exc}"
                 score = 0
-                confidence_score = None
-                human_grade = None if not is_mcq else 0.0
 
             scores.append(score)
             details.append(
                 {
+                    "run": run_idx + 1,
                     "question_id": props.get("Question_ID", ""),
                     "reactor_type": props.get("Exam_Type", ""),
                     "topic": props.get("Question_Topic", ""),
                     "type": q_type,
                     "key_answer": key_answer,
-                    "question": q_text,
                     "response": response_text,
                     "score": score,
-                    "run": run_idx + 1,
-                    "format": "MCQ" if is_mcq else "Open-Ended",
-                    "confidence_score": confidence_score,
-                    "human_grade": human_grade,
-                    "marks": marks,
                 }
             )
 
-            request_num = i * n_runs + run_idx + 1
+            request_idx += 1
             if progress_cb:
-                progress_cb(request_num / total_requests)
-
-            if request_num < total_requests:
+                progress_cb(request_idx / total_requests)
+            if request_idx < total_requests:
                 time.sleep(delay_s)
 
     return {

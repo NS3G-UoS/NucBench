@@ -190,7 +190,17 @@ def build_parser() -> argparse.ArgumentParser:
     shared.add_argument(
         "--api-key", "-k",
         default=None,
-        help="Provider API key. Falls back to env var NUCBENCH_API_KEY.",
+        help="Provider API key. Falls back to env var NUCBENCH_API_KEY. "
+             "Not required when --api-base is set (local models).",
+    )
+    shared.add_argument(
+        "--api-base",
+        default=None,
+        metavar="URL",
+        help="Base URL of a local inference server "
+             "(e.g. http://localhost:11434 for Ollama, "
+             "http://localhost:8080 for llama.cpp/vLLM/LM Studio). "
+             "When provided, --api-key is optional.",
     )
     shared.add_argument(
         "--questions", "-n",
@@ -223,6 +233,15 @@ def build_parser() -> argparse.ArgumentParser:
         "--output", "-o",
         default="results.json",
         help="Path to the results JSON file. (default: results.json)",
+    )
+    shared.add_argument(
+        "--unique-per-run",
+        action="store_true",
+        default=False,
+        help=(
+            "Draw a fresh random sample of questions for each run.  "
+            "Default (off): every run repeats the same sampled questions."
+        ),
     )
     shared.add_argument(
         "--grade-open-ended",
@@ -266,14 +285,18 @@ def main(argv: List[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    # Resolve API key
+    # Resolve API key — optional when a local server is specified
     api_key = args.api_key or os.environ.get("NUCBENCH_API_KEY", "")
-    if not api_key:
+    api_base: str | None = getattr(args, "api_base", None)
+    if not api_key and not api_base:
         print(
-            "Error: no API key provided. Use --api-key or set NUCBENCH_API_KEY.",
+            "Error: no API key provided. Use --api-key, set NUCBENCH_API_KEY, "
+            "or supply --api-base for a local model.",
             file=sys.stderr,
         )
         return 1
+    if api_base:
+        print(f"  Using local server : {api_base}")
 
     # Select and run task
     task_map = {
@@ -300,9 +323,11 @@ def main(argv: List[str] | None = None) -> int:
         payload = task_fn(
             model=args.model,
             api_key=api_key,
+            api_base=api_base or None,
             temperature=args.temperature,
             n_samples=args.questions,
             n_runs=args.runs,
+            unique_per_run=args.unique_per_run,
             delay_s=args.delay,
             progress_cb=progress_cb,
         )
@@ -318,7 +343,7 @@ def main(argv: List[str] | None = None) -> int:
 
     # Save results
     from nucbench.scoring import save_results
-    out_path = save_results(
+    out_path, _ = save_results(
         task_name=payload["task_name"],
         model=payload["model"],
         scores=payload["scores"],
