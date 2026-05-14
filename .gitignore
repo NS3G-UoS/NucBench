@@ -4,3 +4,4 @@ exams/undergraduate/*
 !exams/undergraduate/README.md
 images/* 
 !images/README.md
+results.json
